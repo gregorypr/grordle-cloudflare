@@ -6,7 +6,9 @@
       "Bash(node -e:*)",
       "Bash(for f in \"c:/Users/greg/OneDrive/Code/grordle/data/\"*.txt)",
       "Bash(done)",
-      "Bash(python tools/generate_wordlist_table.py:*)"
+      "Bash(python tools/generate_wordlist_table.py:*)",
+      "Bash(xargs ls:*)",
+      "Bash(ls:*)"
     ]
   }
 }

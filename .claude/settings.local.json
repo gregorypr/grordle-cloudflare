@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/remove-words.js:*)",
+      "Bash(ls -la \"c:\\\\Users\\\\greg\\\\OneDrive\\\\Code\\\\grordle\\\\public\"\"*.txt 2>/dev/null || dir \"c:UsersgregOneDriveCodegrordlepublic*.txt \")",
+      "Bash(node -e:*)",
+      "Bash(for f in \"c:/Users/greg/OneDrive/Code/grordle/data/\"*.txt)",
+      "Bash(done)",
+      "Bash(python tools/generate_wordlist_table.py:*)"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "group-wordle-neon",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "node server.js",
+    "dev:all": "node server.js & vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "migrate:wordlist": "node migrations/run-migration.js repopulate-wordlist up",
+    "migrate:wordlist:rollback": "node migrations/run-migration.js repopulate-wordlist down"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "pg": "^8.13.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "express": "^5.2.1",
+    "vite": "^5.0.8"
+  }
+}

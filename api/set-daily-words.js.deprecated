@@ -1,0 +1,121 @@
+// api/set-daily-words.js
+import { Pool } from "pg";
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+
+async function ensureTables() {
+  // Create daily_word_overrides table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS daily_word_overrides (
+      id SERIAL PRIMARY KEY,
+      play_date DATE NOT NULL UNIQUE,
+      target_word TEXT,
+      start_word TEXT,
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  // Create index on play_date
+  try {
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_daily_word_overrides_date 
+      ON daily_word_overrides(play_date);
+    `);
+  } catch (e) {
+    // Index already exists
+  }
+}
+
+export default async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    if (!connectionString) {
+      throw new Error("DATABASE_URL not set");
+    }
+
+    await ensureTables();
+
+    const { date, targetWord, startWord, adminPassword } = req.body;
+
+    console.log("[set-daily-words] Received request:", { date, targetWord, startWord });
+
+    // Verify admin password
+    if (adminPassword !== "admin123") {
+      return res.status(403).json({ error: "Invalid admin password" });
+    }
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    // Build update query dynamically based on what was provided
+    // Only update the fields that are explicitly provided
+    let query, params;
+    
+    if (targetWord !== undefined && startWord !== undefined) {
+      // Both provided - update both
+      query = `
+        INSERT INTO daily_word_overrides (play_date, target_word, start_word)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (play_date) 
+        DO UPDATE SET 
+          target_word = EXCLUDED.target_word,
+          start_word = EXCLUDED.start_word,
+          updated_at = NOW()
+        RETURNING target_word, start_word;
+      `;
+      params = [date, targetWord, startWord];
+    } else if (targetWord !== undefined) {
+      // Only target word provided - preserve existing start word
+      query = `
+        INSERT INTO daily_word_overrides (play_date, target_word, start_word)
+        VALUES ($1, $2, NULL)
+        ON CONFLICT (play_date) 
+        DO UPDATE SET 
+          target_word = EXCLUDED.target_word,
+          updated_at = NOW()
+        RETURNING target_word, start_word;
+      `;
+      params = [date, targetWord];
+    } else if (startWord !== undefined) {
+      // Only start word provided - preserve existing target word
+      query = `
+        INSERT INTO daily_word_overrides (play_date, target_word, start_word)
+        VALUES ($1, NULL, $2)
+        ON CONFLICT (play_date) 
+        DO UPDATE SET 
+          start_word = EXCLUDED.start_word,
+          updated_at = NOW()
+        RETURNING target_word, start_word;
+      `;
+      params = [date, startWord];
+    } else {
+      return res.status(400).json({ error: "Either targetWord or startWord must be provided" });
+    }
+
+    console.log("[set-daily-words] Executing query with params:", params);
+    const result = await pool.query(query, params);
+    console.log("[set-daily-words] Query result:", result.rows[0]);
+
+    return res.status(200).json({
+      ok: true,
+      date,
+      targetWord: result.rows[0].target_word,
+      startWord: result.rows[0].start_word
+    });
+  } catch (err) {
+    console.error("set-daily-words function error", err);
+    return res.status(500).json({
+      error: "Server error in set-daily-words",
+      details: err.message
+    });
+  }
+};

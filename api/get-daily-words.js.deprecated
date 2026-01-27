@@ -1,0 +1,54 @@
+// api/get-daily-words.js
+import { Pool } from "pg";
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+
+export default async (req, res) => {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    if (!connectionString) {
+      throw new Error("DATABASE_URL not set");
+    }
+
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    // Check for word overrides
+    const result = await pool.query(`
+      SELECT target_word, start_word
+      FROM daily_word_overrides
+      WHERE play_date = $1;
+    `, [date]);
+
+    if (result.rowCount > 0) {
+      return res.status(200).json({
+        ok: true,
+        hasOverride: true,
+        targetWord: result.rows[0].target_word,
+        startWord: result.rows[0].start_word
+      });
+    } else {
+      return res.status(200).json({
+        ok: true,
+        hasOverride: false
+      });
+    }
+  } catch (err) {
+    console.error("get-daily-words function error", err);
+    return res.status(500).json({
+      error: "Server error in get-daily-words",
+      details: err.message
+    });
+  }
+};

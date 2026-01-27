@@ -1,0 +1,5 @@
+# Top 100 Hardest Words (by DIFFICULTY)
+# Extracted from wordlist-table-cleaned.txt
+# Format: WORD	DIFFICULTY	SCRABBLE_SCORE	PAR
+
+# (This file will be filled with the top 100 hardest words, sorted by DIFFICULTY descending)

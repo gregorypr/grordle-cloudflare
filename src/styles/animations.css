@@ -1,0 +1,109 @@
+/* Flip animations that change colour halfway through the flip, like Wordle */
+@keyframes tile-flip-correct {
+  0%   { transform: rotateX(0deg);   background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  49%  { transform: rotateX(-90deg); background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  50%  { transform: rotateX(-90deg); background-color: #16a34a;              border-color: #15803d;               }
+  100% { transform: rotateX(0deg);   background-color: #16a34a;              border-color: #15803d;               }
+}
+
+@keyframes tile-flip-present {
+  0%   { transform: rotateX(0deg);   background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  49%  { transform: rotateX(-90deg); background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  50%  { transform: rotateX(-90deg); background-color: #eab308;              border-color: #ca8a04;               }
+  100% { transform: rotateX(0deg);   background-color: #eab308;              border-color: #ca8a04;               }
+}
+
+@keyframes tile-flip-absent {
+  0%   { transform: rotateX(0deg);   background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  49%  { transform: rotateX(-90deg); background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+  50%  { transform: rotateX(-90deg); background-color: #374151;              border-color: #111827;               }
+  100% { transform: rotateX(0deg);   background-color: #374151;              border-color: #111827;               }
+}
+
+.tile-flip-correct {
+  animation: tile-flip-correct 600ms ease forwards;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+.tile-flip-present {
+  animation: tile-flip-present 600ms ease forwards;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+.tile-flip-absent {
+  animation: tile-flip-absent 600ms ease forwards;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+
+/* Shake animation for invalid word / too short */
+@keyframes row-shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-6px); }
+  30%, 60%, 90% { transform: translateX(6px); }
+}
+.row-shake {
+  animation: row-shake 400ms ease;
+}
+
+/* Win bounce animation when the correct word is found */
+@keyframes row-win {
+  0%   { transform: translateY(0);   }
+  30%  { transform: translateY(-8px);}
+  60%  { transform: translateY(4px); }
+  100% { transform: translateY(0);   }
+}
+.row-win {
+  animation: row-win 600ms ease-out;
+}
+
+/* Fireworks celebration animation */
+.fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.firework {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: firework-explode 1.5s ease-out forwards;
+}
+
+@keyframes firework-explode {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) scale(0);
+    opacity: 0;
+  }
+}
+
+.firework-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color) 0%, transparent 70%);
+  box-shadow: 0 0 6px var(--color);
+}
+
+@keyframes firework-trail {
+  0% {
+    transform: translateY(100vh) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(var(--target-y)) scale(0.5);
+    opacity: 0.8;
+  }
+}

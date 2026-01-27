@@ -1,0 +1,55 @@
+// api/clear-daily-words.js
+import { Pool } from "pg";
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+
+export default async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    if (!connectionString) {
+      throw new Error("DATABASE_URL not set");
+    }
+
+    const { date, adminPassword } = req.body;
+
+    console.log("[clear-daily-words] Received request for date:", date);
+
+    // Verify admin password
+    if (adminPassword !== "admin123") {
+      return res.status(403).json({ error: "Invalid admin password" });
+    }
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    // Delete the word overrides for this date
+    const result = await pool.query(`
+      DELETE FROM daily_word_overrides
+      WHERE play_date = $1
+      RETURNING play_date;
+    `, [date]);
+
+    console.log("[clear-daily-words] Deleted rows:", result.rowCount);
+
+    return res.status(200).json({
+      ok: true,
+      cleared: result.rowCount > 0,
+      date: date
+    });
+  } catch (err) {
+    console.error("clear-daily-words function error", err);
+    return res.status(500).json({
+      error: "Server error in clear-daily-words",
+      details: err.message
+    });
+  }
+};

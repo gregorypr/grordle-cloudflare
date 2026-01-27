@@ -1,0 +1,16 @@
+# Cloudflare Pages configuration
+name = "grordle"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages-specific settings
+pages_build_output_dir = "dist"
+
+# Environment variables (set these in Cloudflare dashboard or use .dev.vars locally)
+# DATABASE_URL = "your-neon-connection-string"
+
+# Cron triggers for wordlist migration (runs at 13:00 and 14:00 UTC daily)
+# Note: Cron triggers require a separate Worker, not Pages Functions
+# We'll set this up as a scheduled worker later
+# [triggers]
+# crons = ["0 13 * * *", "0 14 * * *"]

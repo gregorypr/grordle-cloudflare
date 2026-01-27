@@ -8,7 +8,10 @@
       "Bash(done)",
       "Bash(python tools/generate_wordlist_table.py:*)",
       "Bash(xargs ls:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx wrangler pages dev:*)"
     ]
   }
 }

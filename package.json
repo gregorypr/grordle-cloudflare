@@ -7,22 +7,28 @@
     "dev": "vite",
     "dev:api": "node server.js",
     "dev:all": "node server.js & vite",
+    "dev:cf": "wrangler pages dev dist --live-reload",
     "build": "vite build",
     "preview": "vite preview",
+    "deploy": "npm run build && wrangler pages deploy dist",
     "migrate:wordlist": "node migrations/run-migration.js repopulate-wordlist up",
     "migrate:wordlist:rollback": "node migrations/run-migration.js repopulate-wordlist down"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
     "dotenv": "^17.2.3",
+    "hono": "^4.0.0",
     "pg": "^8.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
     "express": "^5.2.1",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "wrangler": "^3.0.0"
   }
 }

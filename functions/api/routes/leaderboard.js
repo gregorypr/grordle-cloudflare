@@ -77,63 +77,78 @@ export async function leaderboardHandler(c) {
       startDate = `${year}-01-01`;
     }
 
-    // Get all players
-    const playersResult = await sql('SELECT id, player_name FROM players ORDER BY player_name');
-    const allPlayers = playersResult;
-
-    // Get all game dates in the period
-    let datesResult;
+    // Get leaderboard data in a single efficient query
+    let leaderboardResult;
     if (startDate) {
-      datesResult = await sql(
-        `SELECT DISTINCT play_date
-         FROM games
-         WHERE play_date >= $1 AND play_date <= $2
-         ORDER BY play_date`,
+      leaderboardResult = await sql(
+        `WITH game_dates AS (
+          SELECT DISTINCT play_date
+          FROM games
+          WHERE play_date >= $1 AND play_date <= $2
+        ),
+        game_count AS (
+          SELECT COUNT(*) as total_games FROM game_dates
+        ),
+        player_scores AS (
+          SELECT
+            p.id as player_id,
+            p.player_name,
+            COUNT(s.id) as games_played,
+            COALESCE(SUM(s.attempts), 0) as total_attempts
+          FROM players p
+          LEFT JOIN scores s ON s.player_id = p.id
+          LEFT JOIN games g ON s.game_id = g.id AND g.play_date >= $1 AND g.play_date <= $2
+          GROUP BY p.id, p.player_name
+        )
+        SELECT
+          ps.player_name,
+          ps.games_played,
+          ps.total_attempts,
+          gc.total_games,
+          (ps.total_attempts + (gc.total_games - ps.games_played) * 8) as total_score
+        FROM player_scores ps
+        CROSS JOIN game_count gc
+        WHERE gc.total_games > 0
+        ORDER BY total_score ASC`,
         [startDate, endDate]
       );
     } else {
-      datesResult = await sql(
-        `SELECT DISTINCT play_date
-         FROM games
-         ORDER BY play_date`
+      leaderboardResult = await sql(
+        `WITH game_dates AS (
+          SELECT DISTINCT play_date FROM games
+        ),
+        game_count AS (
+          SELECT COUNT(*) as total_games FROM game_dates
+        ),
+        player_scores AS (
+          SELECT
+            p.id as player_id,
+            p.player_name,
+            COUNT(s.id) as games_played,
+            COALESCE(SUM(s.attempts), 0) as total_attempts
+          FROM players p
+          LEFT JOIN scores s ON s.player_id = p.id
+          LEFT JOIN games g ON s.game_id = g.id
+          GROUP BY p.id, p.player_name
+        )
+        SELECT
+          ps.player_name,
+          ps.games_played,
+          ps.total_attempts,
+          gc.total_games,
+          (ps.total_attempts + (gc.total_games - ps.games_played) * 8) as total_score
+        FROM player_scores ps
+        CROSS JOIN game_count gc
+        WHERE gc.total_games > 0
+        ORDER BY total_score ASC`
       );
     }
 
-    const gameDates = datesResult.map(r => r.play_date);
-
-    // For each player, calculate their score
-    const leaderboard = [];
-
-    for (const player of allPlayers) {
-      let totalScore = 0;
-      let gamesPlayed = 0;
-
-      for (const gameDate of gameDates) {
-        const scoreResult = await sql(
-          `SELECT s.attempts
-           FROM scores s
-           JOIN games g ON s.game_id = g.id
-           WHERE s.player_id = $1 AND g.play_date = $2
-           LIMIT 1`,
-          [player.id, gameDate]
-        );
-
-        if (scoreResult.length > 0) {
-          totalScore += scoreResult[0].attempts;
-          gamesPlayed++;
-        } else {
-          totalScore += 8;
-        }
-      }
-
-      if (gameDates.length > 0) {
-        leaderboard.push({
-          name: player.player_name,
-          score: totalScore,
-          gamesPlayed: gamesPlayed
-        });
-      }
-    }
+    const leaderboard = leaderboardResult.map(row => ({
+      name: row.player_name,
+      score: parseInt(row.total_score),
+      gamesPlayed: parseInt(row.games_played)
+    }));
 
     // Sort by total score ascending (lower is better)
     leaderboard.sort((a, b) => a.score - b.score);

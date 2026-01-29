@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" rx="4" fill="#1a1a2e"/>
+
+  <!-- Wordle-style grid - 3x3 representing game tiles -->
+  <!-- Row 1 -->
+  <rect x="4" y="4" width="7" height="7" rx="1" fill="#538d4e"/>
+  <rect x="12.5" y="4" width="7" height="7" rx="1" fill="#538d4e"/>
+  <rect x="21" y="4" width="7" height="7" rx="1" fill="#b59f3b"/>
+
+  <!-- Row 2 -->
+  <rect x="4" y="12.5" width="7" height="7" rx="1" fill="#3a3a4d"/>
+  <rect x="12.5" y="12.5" width="7" height="7" rx="1" fill="#538d4e"/>
+  <rect x="21" y="12.5" width="7" height="7" rx="1" fill="#3a3a4d"/>
+
+  <!-- Row 3 -->
+  <rect x="4" y="21" width="7" height="7" rx="1" fill="#b59f3b"/>
+  <rect x="12.5" y="21" width="7" height="7" rx="1" fill="#3a3a4d"/>
+  <rect x="21" y="21" width="7" height="7" rx="1" fill="#538d4e"/>
+</svg>

@@ -173,6 +173,9 @@ export default function GolfGame({ playerName, setMessage, validationWords }) {
       } else if (key === "BACKSPACE") {
         e.preventDefault();
         setCurrentGuess(prev => prev.slice(0, -1));
+      } else if (key === "ESCAPE") {
+        e.preventDefault();
+        setCurrentGuess("");
       } else if (/^[A-Z]$/.test(key) && currentGuess.length < 5) {
         e.preventDefault();
         setCurrentGuess(prev => prev + key);
@@ -467,10 +470,11 @@ export default function GolfGame({ playerName, setMessage, validationWords }) {
 
   const handleKeyPress = (key) => {
     if (gameOver || isRevealing || isViewingMode) return;
-    if (gameOver || isRevealing || isViewingMode) return;
 
     if (key === "ENTER") {
       handleSubmitGuess();
+    } else if (key === "CLEAR") {
+      setCurrentGuess("");
     } else if (key === "BACKSPACE") {
       setCurrentGuess(prev => prev.slice(0, -1));
     } else if (currentGuess.length < 5) {

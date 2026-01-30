@@ -45,13 +45,22 @@ const Keyboard = memo(function Keyboard({ keyboardStatus = {}, onKeyPress, gameO
             );
           })}
           {ri === 2 && (
-            <button
-              onClick={() => onKeyPress("BACK")}
-              disabled={gameOver || currentGuessLength === 0 || isRevealing}
-              className="px-3 h-12 bg-[#d3d6da] hover:bg-[#bbbec1] disabled:bg-[#787c7e] disabled:opacity-50 text-black disabled:text-white text-xs font-bold rounded transition"
-            >
-              ←
-            </button>
+            <>
+              <button
+                onClick={() => onKeyPress("BACK")}
+                disabled={gameOver || currentGuessLength === 0 || isRevealing}
+                className="px-3 h-12 bg-[#d3d6da] hover:bg-[#bbbec1] disabled:bg-[#787c7e] disabled:opacity-50 text-black disabled:text-white text-xs font-bold rounded transition"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => onKeyPress("CLEAR")}
+                disabled={gameOver || currentGuessLength === 0 || isRevealing}
+                className="px-2 h-12 bg-[#d3d6da] hover:bg-[#bbbec1] disabled:bg-[#787c7e] disabled:opacity-50 text-black disabled:text-white text-xs font-bold rounded transition"
+              >
+                CLR
+              </button>
+            </>
           )}
         </div>
       ))}

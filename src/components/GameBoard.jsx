@@ -252,6 +252,8 @@ export default function GameBoard({
 
     if (key === "ENTER") {
       submitGuess();
+    } else if (key === "CLEAR") {
+      setCurrentGuess("");
     } else if (key === "BACK") {
       setCurrentGuess(prev => prev.slice(0, -1));
     } else if (/^[A-Z]$/.test(key)) {
@@ -279,6 +281,9 @@ export default function GameBoard({
       } else if (key === "Backspace") {
         e.preventDefault();
         handleKeyPress("BACK");
+      } else if (key === "Escape") {
+        e.preventDefault();
+        handleKeyPress("CLEAR");
       }
     };
     window.addEventListener("keydown", onKeyDown);

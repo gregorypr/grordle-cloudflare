@@ -24,7 +24,7 @@ export async function gameStateHandler(c) {
     console.log("[game-state] Fetching game state for date:", date);
 
     // Get target word
-    const wordResult = await sql("SELECT word FROM wordlist ORDER BY ctid");
+    const wordResult = await sql("SELECT word FROM wordlist ORDER BY id");
 
     if (wordResult.length === 0) {
       return c.json({ ok: false, error: "Wordlist is empty" }, 500);

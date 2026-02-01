@@ -1,7 +1,7 @@
 // Local development server for debugging API functions
 import express from 'express';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 
 dotenv.config();
@@ -34,6 +34,9 @@ const routes = [
   'leaderboard',
   'save-game',
   'completed-games',
+  'game-state',
+  'motd',
+  'reset-player-status',
   'golf-start',
   'golf-get-hole',
   'golf-next-hole',
@@ -47,7 +50,7 @@ const routes = [
 for (const route of routes) {
   const modulePath = join(__dirname, 'api', `${route}.js`);
   try {
-    const module = await import(modulePath);
+    const module = await import(pathToFileURL(modulePath).href);
     const handler = module.default || module.handler;
     if (handler) {
       app.all(`/api/${route}`, wrapHandler(handler));

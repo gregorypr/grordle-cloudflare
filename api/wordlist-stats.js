@@ -24,7 +24,7 @@ export default async (req, res) => {
     }
 
     // Get sample words from each list
-    const curatedSample = await pool.query("SELECT word FROM wordlist ORDER BY ctid LIMIT 5");
+    const curatedSample = await pool.query("SELECT word FROM wordlist ORDER BY id LIMIT 5");
     
     let validationSample = [];
     if (validationCount > 0) {
@@ -48,7 +48,7 @@ export default async (req, res) => {
     };
 
     const today = getAustralianDate();
-    const wordlistForDate = await pool.query("SELECT word FROM wordlist ORDER BY ctid");
+    const wordlistForDate = await pool.query("SELECT word FROM wordlist ORDER BY id");
     const wordlist = wordlistForDate.rows.map(r => r.word);
     
     const targetPrefix = "TARGET:";

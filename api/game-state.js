@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
     // Get target word
     const wordResult = await pool.query(
-      "SELECT word FROM wordlist ORDER BY ctid"
+      "SELECT word FROM wordlist ORDER BY id"
     );
     const wordlist = wordResult.rows.map((row) => row.word);
     

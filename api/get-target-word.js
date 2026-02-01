@@ -25,11 +25,10 @@ export default async (req, res) => {
       return res.status(400).json({ error: "Date is required" });
     }
 
-    // Get wordlist from database in insertion order (matches file order from migration)
-    // Using ctid (physical row ID) as a proxy for insertion order
+    // Get wordlist from database in insertion order (by id for stability)
     const wordlistResult = await pool.query(`
       SELECT word FROM wordlist
-      ORDER BY ctid
+      ORDER BY id
     `);
 
     if (wordlistResult.rowCount === 0) {

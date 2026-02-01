@@ -10,10 +10,10 @@ export async function getTargetWordHandler(c) {
       return c.json({ error: "Date is required" }, 400);
     }
 
-    // Get wordlist from database in insertion order
+    // Get wordlist from database in insertion order (by id for stability)
     const wordlistResult = await sql(`
       SELECT word FROM wordlist
-      ORDER BY ctid
+      ORDER BY id
     `);
 
     if (wordlistResult.length === 0) {

@@ -646,10 +646,19 @@ export default function App() {
           <div className="flex gap-2 mb-6 justify-center flex-wrap">
             <TabButton
               label={
-                <div className="flex items-center gap-2">
-                  <span>Daily</span>
-                  <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {new Date().getDate()}
+                <div className="flex flex-col items-center gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span>Daily</span>
+                    <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {new Date().getDate()}
+                    </span>
+                  </div>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                    todayDifficulty === "Easy" ? "bg-green-600 text-white" :
+                    todayDifficulty === "Hard" ? "bg-red-600 text-white" :
+                    "bg-amber-500 text-white"
+                  }`}>
+                    {todayDifficulty}
                   </span>
                 </div>
               }
@@ -675,19 +684,6 @@ export default function App() {
 
           {view === "game" && (
             <>
-              <div className="mb-6 text-center">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 inline-block">
-                  <p className="text-purple-200 text-sm mb-1">Word of the Day</p>
-                  <p className="text-3xl font-bold text-white tracking-widest">
-                    {"*****"}
-                  </p>
-                  <p className="text-purple-200 text-xs mt-2">
-                    Difficulty:{" "}
-                    <span className="font-semibold">{todayDifficulty}</span>
-                  </p>
-                </div>
-              </div>
-
               {message && (
                 <div className="mb-4 p-4 bg-white/20 backdrop-blur-sm rounded-lg text-white text-center font-semibold">
                   {message}

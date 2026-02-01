@@ -16,6 +16,7 @@ import { wordlistHandler } from "./routes/wordlist.js";
 import { gameStateHandler } from "./routes/game-state.js";
 import { getTargetWordHandler } from "./routes/get-target-word.js";
 import { motdHandler } from "./routes/motd.js";
+import { resetPlayerStatusHandler } from "./routes/reset-player-status.js";
 
 // Golf routes
 import { golfStartHandler } from "./routes/golf-start.js";
@@ -51,6 +52,7 @@ app.get("/game-state", gameStateHandler);
 app.get("/get-target-word", getTargetWordHandler);
 app.get("/motd", motdHandler);
 app.post("/motd", motdHandler);
+app.post("/reset-player-status", resetPlayerStatusHandler);
 
 // Word routes
 app.post("/validate-word", validateWordHandler);

@@ -18,6 +18,12 @@ import { getTargetWordHandler } from "./routes/get-target-word.js";
 import { motdHandler } from "./routes/motd.js";
 import { resetPlayerStatusHandler } from "./routes/reset-player-status.js";
 import { scheduleWordlistMigrationHandler } from "./routes/schedule-wordlist-migration.js";
+import { resetPasswordHandler } from "./routes/reset-password.js";
+import { deleteUserHandler } from "./routes/delete-user.js";
+import { resetAllDataHandler } from "./routes/reset-all-data.js";
+import { editDailyScoreHandler } from "./routes/edit-daily-score.js";
+import { editGolfScoreHandler } from "./routes/edit-golf-score.js";
+import { wordVotesHandler } from "./routes/word-votes.js";
 
 // Golf routes
 import { golfStartHandler } from "./routes/golf-start.js";
@@ -57,6 +63,14 @@ app.post("/reset-player-status", resetPlayerStatusHandler);
 app.get("/schedule-wordlist-migration", scheduleWordlistMigrationHandler);
 app.post("/schedule-wordlist-migration", scheduleWordlistMigrationHandler);
 app.delete("/schedule-wordlist-migration", scheduleWordlistMigrationHandler);
+
+// Admin routes
+app.post("/reset-password", resetPasswordHandler);
+app.post("/delete-user", deleteUserHandler);
+app.post("/reset-all-data", resetAllDataHandler);
+app.post("/edit-daily-score", editDailyScoreHandler);
+app.post("/edit-golf-score", editGolfScoreHandler);
+app.all("/word-votes", wordVotesHandler);
 
 // Word routes
 app.post("/validate-word", validateWordHandler);

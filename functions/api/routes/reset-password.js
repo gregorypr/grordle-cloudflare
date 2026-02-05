@@ -16,7 +16,7 @@ export async function resetPasswordHandler(c) {
     }
 
     await sql(
-      'UPDATE players SET password_hash = NULL, password_reset_required = TRUE WHERE player_name = $1',
+      'UPDATE players SET password_hash = NULL, password_reset_required = TRUE WHERE LOWER(player_name) = LOWER($1)',
       [playerName]
     );
 

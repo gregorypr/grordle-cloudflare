@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     // Set password_reset_required to true and clear password hash
     await pool.query(
-      'UPDATE players SET password_hash = NULL, password_reset_required = TRUE WHERE player_name = $1',
+      'UPDATE players SET password_hash = NULL, password_reset_required = TRUE WHERE LOWER(player_name) = LOWER($1)',
       [playerName]
     );
     return res.status(200).json({ ok: true });

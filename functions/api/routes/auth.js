@@ -12,6 +12,7 @@ async function hashPassword(password) {
 
 export async function authHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id"); // Get tenant ID from middleware
 
   try {
     const body = await c.req.json();
@@ -29,8 +30,8 @@ export async function authHandler(c) {
       }
 
       const existingUser = await sql(
-        `SELECT id FROM players WHERE LOWER(player_name) = $1;`,
-        [trimmedUsername]
+        `SELECT id FROM players WHERE LOWER(player_name) = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+        [trimmedUsername, org_id]
       );
 
       return c.json({ exists: existingUser.length > 0 });
@@ -50,20 +51,20 @@ export async function authHandler(c) {
     const passwordHash = await hashPassword(password);
 
     if (action === "register") {
-      // Check if user already exists
+      // Check if user already exists in this tenant
       const existingUser = await sql(
-        `SELECT id FROM players WHERE LOWER(player_name) = $1;`,
-        [trimmedUsername]
+        `SELECT id FROM players WHERE LOWER(player_name) = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+        [trimmedUsername, org_id]
       );
 
       if (existingUser.length > 0) {
         return c.json({ error: "Username already exists" }, 409);
       }
 
-      // Create new user
+      // Create new user with tenant
       const result = await sql(
-        `INSERT INTO players (player_name, password_hash) VALUES ($1, $2) RETURNING id, player_name;`,
-        [trimmedUsername, passwordHash]
+        `INSERT INTO players (player_name, password_hash, org_id) VALUES ($1, $2, $3) RETURNING id, player_name;`,
+        [trimmedUsername, passwordHash, org_id]
       );
 
       return c.json({
@@ -77,8 +78,8 @@ export async function authHandler(c) {
     } else {
       // Login action (default)
       const userResult = await sql(
-        `SELECT id, player_name, password_hash, password_reset_required FROM players WHERE LOWER(player_name) = $1;`,
-        [trimmedUsername]
+        `SELECT id, player_name, password_hash, password_reset_required FROM players WHERE LOWER(player_name) = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+        [trimmedUsername, org_id]
       );
 
       if (userResult.length === 0) {

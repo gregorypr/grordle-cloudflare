@@ -1,7 +1,9 @@
 // Cloudflare Pages Function: reset-all-data handler
+// CRITICAL: This now only resets data for the current tenant
 
 export async function resetAllDataHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id"); // CRITICAL: Tenant isolation
 
   if (c.req.method !== "POST") {
     return c.json({ error: "Method not allowed" }, 405);
@@ -15,33 +17,53 @@ export async function resetAllDataHandler(c) {
       return c.json({ error: "Invalid password" }, 403);
     }
 
-    console.log("Starting reset all data operation...");
+    console.log(`Starting reset all data operation for tenant org_id=${org_id}...`);
 
     // Delete in correct order to avoid foreign key issues
-    await sql(`DELETE FROM golf_holes WHERE 1=1;`);
-    await sql(`DELETE FROM golf_rounds WHERE 1=1;`);
-    await sql(`DELETE FROM daily_golf_course WHERE 1=1;`);
-    await sql(`DELETE FROM daily_word_overrides WHERE 1=1;`);
-    await sql(`DELETE FROM player_games WHERE 1=1;`);
-    await sql(`DELETE FROM scores WHERE 1=1;`);
-    await sql(`DELETE FROM daily_players WHERE 1=1;`);
-    await sql(`DELETE FROM games WHERE 1=1;`);
-    await sql(`DELETE FROM players WHERE 1=1;`);
-    await sql(`DELETE FROM member_start_words WHERE 1=1;`);
-    await sql(`DELETE FROM daily_start_words WHERE 1=1;`);
+    // ONLY for this tenant using COALESCE pattern
 
-    // Reset sequences
-    await sql(`ALTER SEQUENCE IF EXISTS player_games_id_seq RESTART WITH 1;`);
-    await sql(`ALTER SEQUENCE IF EXISTS scores_id_seq RESTART WITH 1;`);
-    await sql(`ALTER SEQUENCE IF EXISTS daily_players_id_seq RESTART WITH 1;`);
-    await sql(`ALTER SEQUENCE IF EXISTS games_id_seq RESTART WITH 1;`);
-    await sql(`ALTER SEQUENCE IF EXISTS players_id_seq RESTART WITH 1;`);
+    // Golf data (has org_id via golf_rounds)
+    await sql(`
+      DELETE FROM golf_holes
+      WHERE round_id IN (
+        SELECT id FROM golf_rounds WHERE COALESCE(org_id, 0) = COALESCE($1, 0)
+      );
+    `, [org_id]);
 
-    console.log("Reset all data operation completed successfully");
+    await sql(`DELETE FROM golf_rounds WHERE COALESCE(org_id, 0) = COALESCE($1, 0);`, [org_id]);
+
+    // Daily golf course is shared (no org_id) - don't delete
+
+    // Player-related data
+    await sql(`
+      DELETE FROM scores
+      WHERE player_id IN (
+        SELECT id FROM players WHERE COALESCE(org_id, 0) = COALESCE($1, 0)
+      );
+    `, [org_id]);
+
+    await sql(`
+      DELETE FROM daily_players
+      WHERE player_id IN (
+        SELECT id FROM players WHERE COALESCE(org_id, 0) = COALESCE($1, 0)
+      );
+    `, [org_id]);
+
+    // Games for this tenant
+    await sql(`DELETE FROM games WHERE COALESCE(org_id, 0) = COALESCE($1, 0);`, [org_id]);
+
+    // Players for this tenant
+    await sql(`DELETE FROM players WHERE COALESCE(org_id, 0) = COALESCE($1, 0);`, [org_id]);
+
+    // Start words are shared - don't delete
+
+    console.log(`Reset all data operation completed successfully for tenant org_id=${org_id}`);
 
     return c.json({
       ok: true,
-      message: "All user data has been reset"
+      message: org_id === null
+        ? "All data has been reset for default tenant (grordle.com)"
+        : `All data has been reset for this tenant (org_id=${org_id})`
     });
   } catch (err) {
     console.error("reset-all-data function error", err);

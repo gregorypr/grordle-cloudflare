@@ -24,6 +24,8 @@ import { resetAllDataHandler } from "./routes/reset-all-data.js";
 import { editDailyScoreHandler } from "./routes/edit-daily-score.js";
 import { editGolfScoreHandler } from "./routes/edit-golf-score.js";
 import { wordVotesHandler } from "./routes/word-votes.js";
+import { manageOrganizationsHandler } from "./routes/manage-organizations.js";
+import { tenantSettingsHandler } from "./routes/tenant-settings.js";
 
 // Golf routes
 import { golfStartHandler } from "./routes/golf-start.js";
@@ -41,6 +43,49 @@ const app = new Hono().basePath("/api");
 app.use("*", async (c, next) => {
   const sql = neon(c.env.DATABASE_URL);
   c.set("sql", sql);
+  await next();
+});
+
+// Middleware to detect tenant/organization from subdomain
+app.use("*", async (c, next) => {
+  const sql = c.get("sql");
+  let org_id = null; // Default tenant (grordle.com)
+
+  try {
+    const host = c.req.header('host') || '';
+
+    // Check if subdomain exists (e.g., friends.grordle.com)
+    // Ignore 'www' and non-subdomain cases
+    if (host.includes('.grordle.com') && !host.startsWith('www.') && host !== 'grordle.com') {
+      const subdomain = host.split('.')[0];
+
+      // Look up organization by slug
+      const orgResult = await sql(
+        'SELECT id FROM organizations WHERE slug = $1',
+        [subdomain]
+      );
+
+      if (orgResult.length > 0) {
+        org_id = orgResult[0].id;
+      }
+    }
+    // Could also check for custom domains here
+    else if (host && host !== 'grordle.com' && host !== 'localhost:3000' && !host.includes('.pages.dev')) {
+      const orgResult = await sql(
+        'SELECT id FROM organizations WHERE domain = $1',
+        [host]
+      );
+
+      if (orgResult.length > 0) {
+        org_id = orgResult[0].id;
+      }
+    }
+  } catch (err) {
+    console.error('Error detecting tenant:', err);
+    // Continue with org_id = null (default tenant)
+  }
+
+  c.set("org_id", org_id);
   await next();
 });
 
@@ -71,6 +116,17 @@ app.post("/reset-all-data", resetAllDataHandler);
 app.post("/edit-daily-score", editDailyScoreHandler);
 app.post("/edit-golf-score", editGolfScoreHandler);
 app.all("/word-votes", wordVotesHandler);
+
+// Organization management (super admin)
+app.get("/manage-organizations", manageOrganizationsHandler);
+app.post("/manage-organizations", manageOrganizationsHandler);
+app.put("/manage-organizations", manageOrganizationsHandler);
+app.delete("/manage-organizations", manageOrganizationsHandler);
+
+// Tenant settings (tenant admin)
+app.get("/tenant-settings", tenantSettingsHandler);
+app.put("/tenant-settings", tenantSettingsHandler);
+app.post("/tenant-settings", tenantSettingsHandler);
 
 // Word routes
 app.post("/validate-word", validateWordHandler);

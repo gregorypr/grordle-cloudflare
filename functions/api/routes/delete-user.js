@@ -2,6 +2,7 @@
 
 export async function deleteUserHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id"); // Tenant isolation
 
   if (c.req.method !== "POST") {
     return c.text("Method Not Allowed", 405);
@@ -15,21 +16,20 @@ export async function deleteUserHandler(c) {
       return c.json({ error: "Missing playerName" }, 400);
     }
 
+    // Find player in this tenant only
     const playerResult = await sql(
-      `SELECT id, player_name FROM players WHERE LOWER(player_name) = LOWER($1);`,
-      [playerName]
+      `SELECT id, player_name FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [playerName, org_id]
     );
 
     if (playerResult.length === 0) {
-      return c.json({ error: "User not found" }, 404);
+      return c.json({ error: "User not found in this tenant" }, 404);
     }
 
     const playerId = playerResult[0].id;
     const actualPlayerName = playerResult[0].player_name;
 
-    await sql(`DELETE FROM scores WHERE player_id = $1;`, [playerId]);
-    await sql(`DELETE FROM daily_players WHERE player_id = $1;`, [playerId]);
-    await sql(`DELETE FROM player_games WHERE player_id = $1;`, [playerId]);
+    // Delete cascade will handle related records
     await sql(`DELETE FROM players WHERE id = $1;`, [playerId]);
 
     return c.json({

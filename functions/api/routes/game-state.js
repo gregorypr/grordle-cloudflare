@@ -17,11 +17,12 @@ function getAustralianDate() {
 
 export async function gameStateHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id"); // Get tenant ID from middleware
 
   try {
     const date = c.req.query("date") || getAustralianDate();
 
-    console.log("[game-state] Fetching game state for date:", date);
+    console.log("[game-state] Fetching game state for date:", date, "org_id:", org_id);
 
     // Get target word
     const wordResult = await sql("SELECT word FROM wordlist ORDER BY id");
@@ -42,14 +43,22 @@ export async function gameStateHandler(c) {
     const index = seed % wordlist.length;
     const targetWord = wordlist[index];
 
-    // Get or create game for this date
-    const gameResult = await sql(
-      `INSERT INTO games (play_date) VALUES ($1)
-       ON CONFLICT (play_date) DO UPDATE SET play_date = EXCLUDED.play_date
-       RETURNING id;`,
-      [date]
+    // Get or create game for this date and tenant
+    let gameResult = await sql(
+      `SELECT id FROM games WHERE play_date = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [date, org_id]
     );
-    const gameId = gameResult[0].id;
+
+    let gameId;
+    if (gameResult.length === 0) {
+      gameResult = await sql(
+        `INSERT INTO games (play_date, org_id) VALUES ($1, $2) RETURNING id;`,
+        [date, org_id]
+      );
+      gameId = gameResult[0].id;
+    } else {
+      gameId = gameResult[0].id;
+    }
 
     // Get all players who have played today
     const playersResult = await sql(
@@ -84,14 +93,15 @@ export async function gameStateHandler(c) {
       dailyScores[row.player_name] = row.best_score;
     });
 
-    // Get all-time scores
+    // Get all-time scores (tenant-scoped)
     const allScoresResult = await sql(
       `SELECT p.player_name, SUM(s.attempts) as total_score
        FROM scores s
        JOIN players p ON s.player_id = p.id
-       WHERE s.success = true
+       WHERE s.success = true AND COALESCE(p.org_id, 0) = COALESCE($1, 0)
        GROUP BY p.player_name
-       ORDER BY total_score ASC`
+       ORDER BY total_score ASC`,
+      [org_id]
     );
 
     const allScores = {};

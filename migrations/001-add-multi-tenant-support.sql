@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_players_org_name ON players(org_id, player_name);
 CREATE INDEX IF NOT EXISTS idx_games_org_id ON games(org_id);
 CREATE INDEX IF NOT EXISTS idx_games_org_date ON games(org_id, play_date);
 CREATE INDEX IF NOT EXISTS idx_golf_rounds_org_id ON golf_rounds(org_id);
-CREATE INDEX IF NOT EXISTS idx_golf_rounds_org_player_date ON golf_rounds(org_id, player_id, course_date);
+CREATE INDEX IF NOT EXISTS idx_golf_rounds_org_player ON golf_rounds(org_id, player_id);
 
 -- Step 4: Update unique constraints to be tenant-aware
 -- Drop old constraint, add new tenant-aware constraint

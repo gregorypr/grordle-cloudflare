@@ -49,3 +49,35 @@ export function tenantFilter(paramIndex) {
 export function tenantFilterSimple(paramIndex) {
   return `COALESCE(org_id, 0) = COALESCE($${paramIndex}, 0)`;
 }
+
+// Utility to set admin password for tenant
+export async function setTenantAdminPassword(sql, slug) {
+  if (!slug || slug === 'grordle') {
+    throw new Error('Cannot set admin password for default tenant');
+  }
+  const newPassword = `${slug}admin`;
+  await sql(
+    'UPDATE organizations SET admin_password = $1 WHERE slug = $2',
+    [newPassword, slug]
+  );
+  return newPassword;
+}
+
+// When creating a new tenant, set admin password to slugname+admin
+export async function createTenant(sql, slug, name, display_name, domain) {
+  // Insert new tenant
+  const result = await sql(
+    'INSERT INTO organizations (slug, name, display_name, domain, admin_password) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+    [slug, name, display_name, domain, `${slug}admin`]
+  );
+  return result[0];
+}
+
+// Utility to update admin passwords for all existing tenants (not default)
+export async function updateAllTenantAdminPasswords(sql) {
+  const tenants = await sql('SELECT slug FROM organizations WHERE slug != $1', ['grordle']);
+  for (const tenant of tenants) {
+    const newPassword = `${tenant.slug}admin`;
+    await sql('UPDATE organizations SET admin_password = $1 WHERE slug = $2', [newPassword, tenant.slug]);
+  }
+}

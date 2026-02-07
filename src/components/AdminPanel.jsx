@@ -1459,11 +1459,12 @@ export default function AdminPanel({ onDataChange, playerName }) {
                       setActiveTab('users');
                     }
                   }}
-                  className="px-4 py-2 rounded-lg bg-white/20 text-white border-2 border-white/30 focus:border-white focus:outline-none"
+                  className="px-4 py-2 rounded-lg bg-gray-800 text-white border-2 border-purple-500 focus:border-purple-400 focus:outline-none"
+                  style={{ color: 'white' }}
                 >
-                  <option value="super">🔐 Super Admin</option>
+                  <option value="super" className="bg-gray-800 text-white">🔐 Super Admin</option>
                   {organizations.map(org => (
-                    <option key={org.id} value={org.id}>
+                    <option key={org.id} value={org.id} className="bg-gray-800 text-white">
                       {org.name} ({org.slug})
                     </option>
                   ))}

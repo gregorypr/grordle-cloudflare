@@ -38,6 +38,7 @@ function getAustralianNow() {
 
 export async function golfLeaderboardHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const period = c.req.query("period") || "all";
@@ -49,10 +50,16 @@ export async function golfLeaderboardHandler(c) {
     let queryParams = [];
     const now = getAustralianNow();
 
+    // Add tenant filter parameter
+    const tenantParamIndex = queryParams.length + 1;
+    queryParams.push(org_id);
+
     if (period === "daily") {
       const today = getAustralianDate();
       dateFilter = `AND gr.completed_at::date = $1::date`;
-      queryParams.push(today);
+      queryParams.unshift(today); // Add at beginning since we added org_id at end
+      queryParams.pop(); // Remove org_id temporarily
+      queryParams.push(org_id); // Add it back at end
     } else if (period === "weekly") {
       const currentYear = now.getFullYear();
       const startOfYear = new Date(currentYear, 0, 1);
@@ -65,18 +72,25 @@ export async function golfLeaderboardHandler(c) {
       const weekEnd = new Date(currentYear, 0, 1 + weekStartDay + 7);
 
       dateFilter = `AND gr.completed_at >= $1 AND gr.completed_at < $2`;
-      queryParams.push(weekStart.toISOString(), weekEnd.toISOString());
+      queryParams.unshift(weekStart.toISOString(), weekEnd.toISOString());
+      queryParams.pop();
+      queryParams.push(org_id);
     } else if (period === "monthly") {
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       dateFilter = `AND gr.completed_at >= $1`;
-      queryParams.push(firstOfMonth.toISOString());
+      queryParams.unshift(firstOfMonth.toISOString());
+      queryParams.pop();
+      queryParams.push(org_id);
     } else if (period === "yearly") {
       const firstOfYear = new Date(now.getFullYear(), 0, 1);
       dateFilter = `AND gr.completed_at >= $1`;
-      queryParams.push(firstOfYear.toISOString());
+      queryParams.unshift(firstOfYear.toISOString());
+      queryParams.pop();
+      queryParams.push(org_id);
     }
 
-    // Get all completed rounds
+    // Get all completed rounds (tenant-scoped)
+    const orgParamNum = queryParams.length;
     const result = await sql(`
       SELECT
         p.player_name,
@@ -95,7 +109,9 @@ export async function golfLeaderboardHandler(c) {
       FROM golf_rounds gr
       JOIN players p ON gr.player_id = p.id
       LEFT JOIN golf_holes gh ON gr.id = gh.round_id
-      WHERE gr.is_completed = TRUE ${dateFilter}
+      WHERE gr.is_completed = TRUE
+        AND COALESCE(gr.org_id, 0) = COALESCE($${orgParamNum}, 0)
+        ${dateFilter}
       GROUP BY p.player_name, gr.id, gr.total_score, gr.completed_at
       ORDER BY gr.total_score ASC, gr.completed_at ASC
       LIMIT 100;

@@ -19,6 +19,7 @@ function getAustralianDate() {
 
 export async function golfStartHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const body = await c.req.json();
@@ -30,24 +31,24 @@ export async function golfStartHandler(c) {
 
     console.log("[golf-start] Starting golf round for player:", playerName);
 
-    // Get or create player
+    // Get or create player (tenant-scoped)
     let playerResult = await sql(
-      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1);`,
-      [playerName]
+      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [playerName, org_id]
     );
 
     let playerId;
     if (playerResult.length === 0) {
       const insertResult = await sql(
-        `INSERT INTO players (player_name) VALUES ($1) RETURNING id;`,
-        [playerName]
+        `INSERT INTO players (player_name, org_id) VALUES ($1, $2) RETURNING id;`,
+        [playerName, org_id]
       );
       playerId = insertResult[0].id;
     } else {
       playerId = playerResult[0].id;
     }
 
-    // Check if player has ANY round from today
+    // Check if player has ANY round from today (tenant-scoped)
     const today = getAustralianDate();
     console.log('[golf-start] Checking for rounds for player:', playerId, 'date:', today);
 
@@ -57,8 +58,9 @@ export async function golfStartHandler(c) {
        FROM golf_rounds
        WHERE player_id = $1
        AND (started_at AT TIME ZONE 'UTC' AT TIME ZONE 'Australia/Sydney')::date = $2::date
+       AND COALESCE(org_id, 0) = COALESCE($3, 0)
        ORDER BY started_at DESC LIMIT 1;`,
-      [playerId, today]
+      [playerId, today, org_id]
     );
 
     if (todayRound.length > 0) {
@@ -120,10 +122,10 @@ export async function golfStartHandler(c) {
 
     // Create new round
     const newRound = await sql(
-      `INSERT INTO golf_rounds (player_id, current_hole)
-       VALUES ($1, 1)
+      `INSERT INTO golf_rounds (player_id, current_hole, org_id)
+       VALUES ($1, 1, $2)
        RETURNING id;`,
-      [playerId]
+      [playerId, org_id]
     );
 
     const roundId = newRound[0].id;

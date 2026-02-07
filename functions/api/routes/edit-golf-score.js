@@ -2,6 +2,7 @@
 
 export async function editGolfScoreHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   if (c.req.method !== "POST") {
     return c.json({ error: "Method not allowed" }, 405);
@@ -20,8 +21,8 @@ export async function editGolfScoreHandler(c) {
     }
 
     const playerResult = await sql(
-      `SELECT id FROM players WHERE player_name = $1`,
-      [playerName]
+      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0)`,
+      [playerName, org_id]
     );
 
     if (playerResult.length === 0) {
@@ -30,14 +31,15 @@ export async function editGolfScoreHandler(c) {
 
     const playerId = playerResult[0].id;
 
-    // Find the golf round for this player and date
+    // Find the golf round for this player and date (tenant-scoped)
     const roundResult = await sql(
       `SELECT id FROM golf_rounds
        WHERE player_id = $1
        AND DATE(completed_at) = $2::date
+       AND COALESCE(org_id, 0) = COALESCE($3, 0)
        ORDER BY completed_at DESC
        LIMIT 1`,
-      [playerId, date]
+      [playerId, date, org_id]
     );
 
     if (roundResult.length === 0) {

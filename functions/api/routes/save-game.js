@@ -2,6 +2,7 @@
 
 export async function saveGameHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const body = await c.req.json();
@@ -11,19 +12,27 @@ export async function saveGameHandler(c) {
       return c.text("Missing or invalid fields", 400);
     }
 
-    // Get or create game for this date
-    const gameResult = await sql(
-      `INSERT INTO games (play_date) VALUES ($1)
-       ON CONFLICT (play_date) DO UPDATE SET play_date = EXCLUDED.play_date
-       RETURNING id;`,
-      [date]
+    // Get or create game for this date and tenant
+    let gameResult = await sql(
+      `SELECT id FROM games WHERE play_date = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [date, org_id]
     );
-    const gameId = gameResult[0].id;
 
-    // Get or create player (case-insensitive lookup)
+    let gameId;
+    if (gameResult.length === 0) {
+      gameResult = await sql(
+        `INSERT INTO games (play_date, org_id) VALUES ($1, $2) RETURNING id;`,
+        [date, org_id]
+      );
+      gameId = gameResult[0].id;
+    } else {
+      gameId = gameResult[0].id;
+    }
+
+    // Get or create player (case-insensitive lookup) in this tenant
     let existingPlayer = await sql(
-      `SELECT id, player_name FROM players WHERE LOWER(player_name) = LOWER($1);`,
-      [playerName]
+      `SELECT id, player_name FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [playerName, org_id]
     );
 
     let playerId;
@@ -31,8 +40,8 @@ export async function saveGameHandler(c) {
       playerId = existingPlayer[0].id;
     } else {
       const playerResult = await sql(
-        `INSERT INTO players (player_name) VALUES ($1) RETURNING id;`,
-        [playerName]
+        `INSERT INTO players (player_name, org_id) VALUES ($1, $2) RETURNING id;`,
+        [playerName, org_id]
       );
       playerId = playerResult[0].id;
     }

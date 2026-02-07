@@ -2,6 +2,7 @@
 
 export async function completedGamesHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const date = c.req.query("date");
@@ -10,21 +11,31 @@ export async function completedGamesHandler(c) {
       return c.text("Missing date parameter", 400);
     }
 
-    // Get or create game for this date
-    const gameResult = await sql(
-      `INSERT INTO games (play_date) VALUES ($1)
-       ON CONFLICT (play_date) DO UPDATE SET play_date = EXCLUDED.play_date
-       RETURNING id;`,
-      [date]
+    // Get or create game for this date and tenant
+    let gameResult = await sql(
+      `SELECT id FROM games WHERE play_date = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [date, org_id]
     );
-    const gameId = gameResult[0].id;
 
-    // Get all players who have ever played
-    const allNamesResult = await sql(`
-      SELECT player_name as name
-      FROM players
-      ORDER BY LOWER(player_name);
-    `);
+    let gameId;
+    if (gameResult.length === 0) {
+      gameResult = await sql(
+        `INSERT INTO games (play_date, org_id) VALUES ($1, $2) RETURNING id;`,
+        [date, org_id]
+      );
+      gameId = gameResult[0].id;
+    } else {
+      gameId = gameResult[0].id;
+    }
+
+    // Get all players who have ever played (tenant-scoped)
+    const allNamesResult = await sql(
+      `SELECT player_name as name
+       FROM players
+       WHERE COALESCE(org_id, 0) = COALESCE($1, 0)
+       ORDER BY LOWER(player_name);`,
+      [org_id]
+    );
 
     // Get all completed games for this date
     const completedResult = await sql(

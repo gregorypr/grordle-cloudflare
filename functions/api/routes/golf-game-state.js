@@ -43,6 +43,7 @@ function getWordsForDateAndHole(dateStr, holeNumber, wordList) {
 
 export async function golfGameStateHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const body = await c.req.json();
@@ -54,17 +55,17 @@ export async function golfGameStateHandler(c) {
 
     console.log('[golf-game-state] Initializing for player:', playerName);
 
-    // Get or create player
+    // Get or create player (tenant-scoped)
     let player = await sql(
-      `SELECT id FROM players WHERE player_name = $1;`,
-      [playerName]
+      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [playerName, org_id]
     );
 
     let playerId;
     if (player.length === 0) {
       const newPlayer = await sql(
-        `INSERT INTO players (player_name) VALUES ($1) RETURNING id;`,
-        [playerName]
+        `INSERT INTO players (player_name, org_id) VALUES ($1, $2) RETURNING id;`,
+        [playerName, org_id]
       );
       playerId = newPlayer[0].id;
     } else {
@@ -73,12 +74,14 @@ export async function golfGameStateHandler(c) {
 
     const today = getAustralianDate();
 
-    // Check for existing round today
+    // Check for existing round today (tenant-scoped)
     const todayRound = await sql(
       `SELECT id, current_hole, is_completed, total_score
        FROM golf_rounds
-       WHERE player_id = $1 AND (started_at AT TIME ZONE 'UTC' AT TIME ZONE 'Australia/Sydney')::date = $2::date;`,
-      [playerId, today]
+       WHERE player_id = $1
+       AND (started_at AT TIME ZONE 'UTC' AT TIME ZONE 'Australia/Sydney')::date = $2::date
+       AND COALESCE(org_id, 0) = COALESCE($3, 0);`,
+      [playerId, today, org_id]
     );
 
     let roundId, currentHole, isCompleted;
@@ -152,9 +155,9 @@ export async function golfGameStateHandler(c) {
 
     // New round - create it and pre-generate all 9 holes
     const newRound = await sql(
-      `INSERT INTO golf_rounds (player_id, current_hole, is_completed)
-       VALUES ($1, 1, FALSE) RETURNING id;`,
-      [playerId]
+      `INSERT INTO golf_rounds (player_id, current_hole, is_completed, org_id)
+       VALUES ($1, 1, FALSE, $2) RETURNING id;`,
+      [playerId, org_id]
     );
 
     roundId = newRound[0].id;

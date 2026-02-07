@@ -98,7 +98,10 @@ export async function gameStateHandler(c) {
       `SELECT p.player_name, SUM(s.attempts) as total_score
        FROM scores s
        JOIN players p ON s.player_id = p.id
-       WHERE s.success = true AND COALESCE(p.org_id, 0) = COALESCE($1, 0)
+       JOIN games g ON s.game_id = g.id
+       WHERE s.success = true
+         AND COALESCE(p.org_id, 0) = COALESCE($1, 0)
+         AND COALESCE(g.org_id, 0) = COALESCE($1, 0)
        GROUP BY p.player_name
        ORDER BY total_score ASC`,
       [org_id]

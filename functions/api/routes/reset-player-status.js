@@ -2,6 +2,7 @@
 
 export async function resetPlayerStatusHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const body = await c.req.json();
@@ -11,21 +12,34 @@ export async function resetPlayerStatusHandler(c) {
       return c.json({ error: "playerName and date are required" }, 400);
     }
 
-    // Get or create game for this date
-    const gameResult = await sql(
-      `INSERT INTO games (play_date) VALUES ($1)
-       ON CONFLICT (play_date) DO UPDATE SET play_date = EXCLUDED.play_date
-       RETURNING id;`,
-      [date]
+    // Get or create game for this date and tenant
+    let gameResult = await sql(
+      `SELECT id FROM games WHERE play_date = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [date, org_id]
     );
-    const gameId = gameResult[0].id;
 
-    // Handle "ALL" to reset all players for today
+    let gameId;
+    if (gameResult.length === 0) {
+      gameResult = await sql(
+        `INSERT INTO games (play_date, org_id) VALUES ($1, $2) RETURNING id;`,
+        [date, org_id]
+      );
+      gameId = gameResult[0].id;
+    } else {
+      gameId = gameResult[0].id;
+    }
+
+    // Handle "ALL" to reset all players for today (tenant-scoped)
     if (playerName === "ALL") {
       await sql(`DELETE FROM daily_players WHERE game_id = $1;`, [gameId]);
       await sql(`DELETE FROM scores WHERE game_id = $1;`, [gameId]);
       await sql(`DELETE FROM player_games WHERE game_id = $1;`, [gameId]);
-      await sql(`DELETE FROM golf_rounds WHERE started_at::date = $1::date;`, [date]);
+      await sql(
+        `DELETE FROM golf_rounds
+         WHERE started_at::date = $1::date
+         AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+        [date, org_id]
+      );
 
       return c.json({
         ok: true,
@@ -33,10 +47,10 @@ export async function resetPlayerStatusHandler(c) {
       });
     }
 
-    // Get player (case-insensitive)
+    // Get player (case-insensitive, tenant-scoped)
     const playerResult = await sql(
-      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1);`,
-      [playerName]
+      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0);`,
+      [playerName, org_id]
     );
 
     if (playerResult.length === 0) {
@@ -65,10 +79,13 @@ export async function resetPlayerStatusHandler(c) {
       [playerId, date]
     );
 
-    // Delete from golf_rounds for this player on this date
+    // Delete from golf_rounds for this player on this date (tenant-scoped)
     await sql(
-      `DELETE FROM golf_rounds WHERE player_id = $1 AND started_at::date = $2::date;`,
-      [playerId, date]
+      `DELETE FROM golf_rounds
+       WHERE player_id = $1
+       AND started_at::date = $2::date
+       AND COALESCE(org_id, 0) = COALESCE($3, 0);`,
+      [playerId, date, org_id]
     );
 
     return c.json({

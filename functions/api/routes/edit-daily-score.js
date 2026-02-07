@@ -2,6 +2,7 @@
 
 export async function editDailyScoreHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   if (c.req.method !== "POST") {
     return c.json({ error: "Method not allowed" }, 405);
@@ -20,8 +21,8 @@ export async function editDailyScoreHandler(c) {
     }
 
     const playerResult = await sql(
-      `SELECT id FROM players WHERE player_name = $1`,
-      [playerName]
+      `SELECT id FROM players WHERE LOWER(player_name) = LOWER($1) AND COALESCE(org_id, 0) = COALESCE($2, 0)`,
+      [playerName, org_id]
     );
 
     if (playerResult.length === 0) {
@@ -31,15 +32,15 @@ export async function editDailyScoreHandler(c) {
     const playerId = playerResult[0].id;
 
     let gameResult = await sql(
-      `SELECT id FROM games WHERE play_date = $1`,
-      [date]
+      `SELECT id FROM games WHERE play_date = $1 AND COALESCE(org_id, 0) = COALESCE($2, 0)`,
+      [date, org_id]
     );
 
     let gameId;
     if (gameResult.length === 0) {
       const newGame = await sql(
-        `INSERT INTO games (play_date) VALUES ($1) RETURNING id`,
-        [date]
+        `INSERT INTO games (play_date, org_id) VALUES ($1, $2) RETURNING id`,
+        [date, org_id]
       );
       gameId = newGame[0].id;
     } else {

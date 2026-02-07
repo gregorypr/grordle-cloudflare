@@ -85,7 +85,9 @@ export async function statusHandler(c) {
       SELECT p.player_name, SUM(s.attempts) AS total_attempts
       FROM scores s
       JOIN players p ON s.player_id = p.id
+      JOIN games g ON s.game_id = g.id
       WHERE COALESCE(p.org_id, 0) = COALESCE($1, 0)
+        AND COALESCE(g.org_id, 0) = COALESCE($1, 0)
       GROUP BY p.player_name;
     `, [org_id]);
 

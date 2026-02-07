@@ -17,6 +17,7 @@ const getAustralianDate = () => {
 
 export async function leaderboardHandler(c) {
   const sql = c.get("sql");
+  const org_id = c.get("org_id");
 
   try {
     const period = c.req.query("period"); // 'today', 'week', 'month', 'year', or 'all'
@@ -85,37 +86,7 @@ export async function leaderboardHandler(c) {
           SELECT DISTINCT play_date
           FROM games
           WHERE play_date >= $1 AND play_date <= $2
-        ),
-        game_count AS (
-          SELECT COUNT(*) as total_games FROM game_dates
-        ),
-        player_scores AS (
-          SELECT
-            p.id as player_id,
-            p.player_name,
-            COUNT(s.id) as games_played,
-            COALESCE(SUM(s.attempts), 0) as total_attempts
-          FROM players p
-          LEFT JOIN scores s ON s.player_id = p.id
-          LEFT JOIN games g ON s.game_id = g.id AND g.play_date >= $1 AND g.play_date <= $2
-          GROUP BY p.id, p.player_name
-        )
-        SELECT
-          ps.player_name,
-          ps.games_played,
-          ps.total_attempts,
-          gc.total_games,
-          (ps.total_attempts + (gc.total_games - ps.games_played) * 8) as total_score
-        FROM player_scores ps
-        CROSS JOIN game_count gc
-        WHERE gc.total_games > 0
-        ORDER BY total_score ASC`,
-        [startDate, endDate]
-      );
-    } else {
-      leaderboardResult = await sql(
-        `WITH game_dates AS (
-          SELECT DISTINCT play_date FROM games
+            AND COALESCE(org_id, 0) = COALESCE($3, 0)
         ),
         game_count AS (
           SELECT COUNT(*) as total_games FROM game_dates
@@ -129,6 +100,9 @@ export async function leaderboardHandler(c) {
           FROM players p
           LEFT JOIN scores s ON s.player_id = p.id
           LEFT JOIN games g ON s.game_id = g.id
+            AND g.play_date >= $1 AND g.play_date <= $2
+            AND COALESCE(g.org_id, 0) = COALESCE($3, 0)
+          WHERE COALESCE(p.org_id, 0) = COALESCE($3, 0)
           GROUP BY p.id, p.player_name
         )
         SELECT
@@ -140,7 +114,42 @@ export async function leaderboardHandler(c) {
         FROM player_scores ps
         CROSS JOIN game_count gc
         WHERE gc.total_games > 0
-        ORDER BY total_score ASC`
+        ORDER BY total_score ASC`,
+        [startDate, endDate, org_id]
+      );
+    } else {
+      leaderboardResult = await sql(
+        `WITH game_dates AS (
+          SELECT DISTINCT play_date FROM games
+          WHERE COALESCE(org_id, 0) = COALESCE($1, 0)
+        ),
+        game_count AS (
+          SELECT COUNT(*) as total_games FROM game_dates
+        ),
+        player_scores AS (
+          SELECT
+            p.id as player_id,
+            p.player_name,
+            COUNT(s.id) as games_played,
+            COALESCE(SUM(s.attempts), 0) as total_attempts
+          FROM players p
+          LEFT JOIN scores s ON s.player_id = p.id
+          LEFT JOIN games g ON s.game_id = g.id
+            AND COALESCE(g.org_id, 0) = COALESCE($1, 0)
+          WHERE COALESCE(p.org_id, 0) = COALESCE($1, 0)
+          GROUP BY p.id, p.player_name
+        )
+        SELECT
+          ps.player_name,
+          ps.games_played,
+          ps.total_attempts,
+          gc.total_games,
+          (ps.total_attempts + (gc.total_games - ps.games_played) * 8) as total_score
+        FROM player_scores ps
+        CROSS JOIN game_count gc
+        WHERE gc.total_games > 0
+        ORDER BY total_score ASC`,
+        [org_id]
       );
     }
 

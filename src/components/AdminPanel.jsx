@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { fetchJson } from "../utils/apiClient";
 import { getAustralianDate } from "../utils/dateUtils";
@@ -51,12 +50,23 @@ export default function AdminPanel({ onDataChange, playerName }) {
     const ADMIN_PASSWORD = "admin123";
 
     // Handler for admin login
-    function checkAdminPassword() {
-      if (adminPassword === ADMIN_PASSWORD) {
-        setIsAdmin(true);
-        setMessage("");
-      } else {
-        setMessage("Incorrect password");
+    async function checkAdminPassword() {
+      setIsLoadingAdmin(true);
+      try {
+        // Fetch admin password for current tenant
+        const result = await fetchJson(`${API_BASE}/tenant-settings`);
+        const dbAdminPassword = result.admin_password || 'admin123';
+        console.log('[AdminPanel] Checking admin password:', { entered: adminPassword, db: dbAdminPassword });
+        if (adminPassword === dbAdminPassword) {
+          setIsAdmin(true);
+          setMessage("");
+        } else {
+          setMessage("Incorrect password");
+        }
+      } catch (err) {
+        setMessage("Error checking admin password");
+      } finally {
+        setIsLoadingAdmin(false);
       }
     }
   // State declarations

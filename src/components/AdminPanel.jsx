@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchJson } from "../utils/apiClient";
 import { getAustralianDate } from "../utils/dateUtils";
+import TabButton from "./TabButton";
 
 // Dummy functions for missing utilities (replace with actual imports if needed)
 // ...existing code...
@@ -97,6 +98,29 @@ export default function AdminPanel({ onDataChange, playerName }) {
   const [golfEditAttempts, setGolfEditAttempts] = useState("");
   const [isEditingGolfScore, setIsEditingGolfScore] = useState(false);
 
+  // Multi-tenant state
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('users');
+  const [viewingAsOrgId, setViewingAsOrgId] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
+  const [tenantSettings, setTenantSettings] = useState(null);
+
+  // Organizations CRUD state
+  const [showOrgForm, setShowOrgForm] = useState(false);
+  const [editingOrgId, setEditingOrgId] = useState(null);
+  const [orgFormData, setOrgFormData] = useState({
+    slug: '', name: '', display_name: '', domain: '',
+    motd: '', primary_color: '#8b5cf6', secondary_color: '#7c3aed'
+  });
+  const [isCreatingOrg, setIsCreatingOrg] = useState(false);
+
+  // Tenant settings state
+  const [settingsFormData, setSettingsFormData] = useState({
+    display_name: '', motd: '',
+    primary_color: '#8b5cf6', secondary_color: '#7c3aed'
+  });
+  const [isSavingTenantSettings, setIsSavingTenantSettings] = useState(false);
+
   // Load settings from localStorage on mount
   useEffect(() => {
     const savedWeekly = localStorage.getItem('gw_weekly_rounds');
@@ -110,9 +134,60 @@ export default function AdminPanel({ onDataChange, playerName }) {
     setGolfEditDate(today);
   }, []);
 
-  // ...existing code...
+  // Domain detection and initial tab setup
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const isSuper = hostname === 'grordle.com' || hostname === 'localhost';
+    setIsSuperAdmin(isSuper);
+    setActiveTab(isSuper ? 'organizations' : 'users');
+  }, []);
 
-  // ...existing code...
+  // Load organizations (super admin only)
+  useEffect(() => {
+    if (isAdmin && isSuperAdmin) {
+      loadOrganizations();
+    }
+  }, [isAdmin, isSuperAdmin]);
+
+  // Load tenant settings
+  useEffect(() => {
+    if (isAdmin) {
+      loadTenantSettings();
+    }
+  }, [isAdmin, viewingAsOrgId]);
+
+  // Load organizations (super admin only)
+  async function loadOrganizations() {
+    try {
+      const result = await fetchJson(`${API_BASE}/manage-organizations`);
+      if (result.ok) {
+        setOrganizations(result.organizations || []);
+      } else {
+        console.error("[Admin] Failed to load organizations:", result.error);
+      }
+    } catch (err) {
+      console.error("[Admin] Error loading organizations:", err);
+      setMessage("Error loading organizations");
+    }
+  }
+
+  // Load tenant settings
+  async function loadTenantSettings() {
+    try {
+      const result = await fetchJson(`${API_BASE}/tenant-settings`);
+      setTenantSettings(result);
+      if (result.display_name || result.motd || result.primary_color || result.secondary_color) {
+        setSettingsFormData({
+          display_name: result.display_name || '',
+          motd: result.motd || '',
+          primary_color: result.primary_color || '#8b5cf6',
+          secondary_color: result.secondary_color || '#7c3aed'
+        });
+      }
+    } catch (err) {
+      console.error("[Admin] Error loading tenant settings:", err);
+    }
+  }
 
   const resetPlayerStatus = async (userName) => {
     if (!confirm(`Reset today's played status for ${userName}? This will clear their game, score, and allow them to play again today.`)) {
@@ -418,7 +493,105 @@ export default function AdminPanel({ onDataChange, playerName }) {
             </button>
           </div>
 
-          <div className="bg-white/5 rounded-lg p-6 mb-6">
+          {/* Tenant Switcher - Super Admin Only */}
+          {isSuperAdmin && (
+            <div className="bg-white/5 rounded-lg p-4 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <label className="text-white font-semibold">Viewing as:</label>
+                <select
+                  value={viewingAsOrgId || 'super'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setViewingAsOrgId(val === 'super' ? null : parseInt(val));
+                  }}
+                  className="px-4 py-2 rounded-lg bg-white/20 text-white border-2 border-white/30 focus:border-white focus:outline-none"
+                >
+                  <option value="super">🔐 Super Admin</option>
+                  {organizations.map(org => (
+                    <option key={org.id} value={org.id}>
+                      {org.name} ({org.slug})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {viewingAsOrgId && (
+                <div className="bg-yellow-600/20 border border-yellow-500 rounded px-3 py-1">
+                  <span className="text-yellow-200 text-sm font-semibold">
+                    Tenant Mode: {organizations.find(o => o.id === viewingAsOrgId)?.name}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {isSuperAdmin && (
+              <>
+                <TabButton
+                  isActive={activeTab === 'organizations'}
+                  onClick={() => setActiveTab('organizations')}
+                  label="🏢 Organizations"
+                />
+                <TabButton
+                  isActive={activeTab === 'system'}
+                  onClick={() => setActiveTab('system')}
+                  label="⚙️ System"
+                />
+              </>
+            )}
+            <TabButton
+              isActive={activeTab === 'users'}
+              onClick={() => setActiveTab('users')}
+              label="👥 Users"
+            />
+            <TabButton
+              isActive={activeTab === 'scores'}
+              onClick={() => setActiveTab('scores')}
+              label="✏️ Scores"
+            />
+            <TabButton
+              isActive={activeTab === 'settings'}
+              onClick={() => setActiveTab('settings')}
+              label="⚙️ Settings"
+            />
+            <TabButton
+              isActive={activeTab === 'danger'}
+              onClick={() => setActiveTab('danger')}
+              label="⚠️ Danger Zone"
+            />
+          </div>
+
+          {/* Tab Content - Placeholder divs for now */}
+          {activeTab === 'organizations' && isSuperAdmin && (
+            <div className="text-white">Organizations Tab - Coming Soon</div>
+          )}
+          {activeTab === 'system' && isSuperAdmin && (
+            <div className="text-white">System Tab - Coming Soon</div>
+          )}
+          {activeTab === 'users' && (
+            <div className="text-white">Users Tab - Coming Soon</div>
+          )}
+          {activeTab === 'scores' && (
+            <div className="text-white">Scores Tab - Coming Soon</div>
+          )}
+          {activeTab === 'settings' && (
+            <div className="text-white">Settings Tab - Coming Soon</div>
+          )}
+          {activeTab === 'danger' && (
+            <div className="text-white">Danger Zone - Coming Soon</div>
+          )}
+
+          {/* Message Display - Global */}
+          {message && (
+            <div className="mt-4 p-4 bg-white/20 rounded-lg text-white whitespace-pre-line">
+              {message}
+            </div>
+          )}
+
+          {/* OLD CONTENT BELOW - TO BE REMOVED ONCE TABS ARE IMPLEMENTED */}
+          <div className="bg-white/5 rounded-lg p-6 mb-6" style={{display: 'none'}}>
             <h3 className="text-xl font-bold text-white mb-4">⚙️ Match Settings</h3>
             <p className="text-purple-200 text-sm mb-4">
               Configure how many rounds contribute to weekly and monthly match calculations.

@@ -617,7 +617,7 @@ export default function App() {
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-6 shadow-2xl">
           {/* Tenant name + Calendar and Settings buttons */}
           <div className="flex items-center justify-between mb-2">
-            {tenantName && tenantName !== "Grordle" ? (
+            {tenantName ? (
               <span className="text-white/80 font-semibold text-sm">{tenantName}</span>
             ) : <span />}
             <div className="flex gap-2">

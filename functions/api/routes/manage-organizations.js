@@ -25,10 +25,10 @@ export async function manageOrganizationsHandler(c) {
         ORDER BY o.created_at DESC
       `);
 
-      return c.json({ organizations: orgs });
+      return c.json({ ok: true, organizations: orgs });
     } catch (err) {
       console.error('Error listing organizations:', err);
-      return c.json({ error: 'Server error' }, 500);
+      return c.json({ ok: false, error: 'Server error', details: err.message }, 500);
     }
   }
 

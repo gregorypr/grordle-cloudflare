@@ -58,8 +58,9 @@ export default function App() {
   const [scoresRefreshTrigger, setScoresRefreshTrigger] = useState(0);
   const [isGameLoading, setIsGameLoading] = useState(false);
   const [todayMessage, setTodayMessage] = useState("");
+  const [tenantName, setTenantName] = useState("");
 
-  // Fetch today's message of the day
+  // Fetch today's message of the day and tenant name
   useEffect(() => {
     const fetchTodayMessage = async () => {
       try {
@@ -71,13 +72,23 @@ export default function App() {
             setTodayMessage(result.message);
           }
         }
-        // Silently ignore errors - feature is optional
       } catch (err) {
-        // Silently fail - MOTD is non-critical, don't disrupt the app
         console.log("[App] MOTD not available (endpoint may not exist yet)");
       }
     };
+    const fetchTenantName = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/tenant-settings`);
+        if (response.ok) {
+          const result = await response.json();
+          setTenantName(result.display_name || result.name || "");
+        }
+      } catch (err) {
+        console.log("[App] Tenant settings not available");
+      }
+    };
     fetchTodayMessage();
+    fetchTenantName();
   }, []);
 
   // Check for saved authentication on mount
@@ -604,8 +615,12 @@ export default function App() {
         </div>
 
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-6 shadow-2xl">
-          {/* Calendar and Settings buttons above the tab bar, right-aligned */}
-          <div className="flex justify-end mb-2 gap-2">
+          {/* Tenant name + Calendar and Settings buttons */}
+          <div className="flex items-center justify-between mb-2">
+            {tenantName && tenantName !== "Grordle" ? (
+              <span className="text-white/80 font-semibold text-sm">{tenantName}</span>
+            ) : <span />}
+            <div className="flex gap-2">
             <button
               className="p-2 rounded-full bg-purple-700 text-white hover:bg-purple-800 transition flex items-center justify-center"
               style={{ minWidth: 40, minHeight: 40 }}
@@ -629,6 +644,7 @@ export default function App() {
                 <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
               </svg>
             </button>
+            </div>
           </div>
 
           {/* Message of the Day or Quote of the Day - display above tabs */}

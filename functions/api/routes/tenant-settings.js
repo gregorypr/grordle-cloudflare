@@ -20,7 +20,7 @@ export async function tenantSettingsHandler(c) {
       }
 
       const result = await sql(
-        `SELECT name, display_name, motd, primary_color, secondary_color, settings
+        `SELECT name, display_name, motd, primary_color, secondary_color, admin_password, settings
          FROM organizations
          WHERE id = $1`,
         [org_id]

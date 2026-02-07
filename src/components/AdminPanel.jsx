@@ -55,7 +55,12 @@ export default function AdminPanel({ onDataChange, playerName }) {
       try {
         // Fetch admin password for current tenant
         const result = await fetchJson(`${API_BASE}/tenant-settings`);
-        const dbAdminPassword = result.admin_password || 'admin123';
+        if (!('admin_password' in result)) {
+          setMessage("Admin password not found for this tenant.");
+          setIsLoadingAdmin(false);
+          return;
+        }
+        const dbAdminPassword = result.admin_password;
         console.log('[AdminPanel] Checking admin password:', { entered: adminPassword, db: dbAdminPassword });
         if (adminPassword === dbAdminPassword) {
           setIsAdmin(true);

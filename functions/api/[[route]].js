@@ -65,12 +65,11 @@ app.use("*", async (c, next) => {
         [subdomain]
       );
 
-      if (orgResult.length > 0) {
-        org_id = orgResult[0].id;
-      } else {
-        // Return error if slug does not exist
-        return c.json({ error: 'Tenant not found for subdomain.' }, 404);
+      if (orgResult.length === 0) {
+        // Return error for all requests if slug does not exist
+        return c.text('Tenant not found for subdomain.', 404);
       }
+      org_id = orgResult[0].id;
     }
     // Could also check for custom domains here
     else if (host && host !== 'grordle.com' && host !== 'localhost:3000' && !host.includes('.pages.dev')) {
@@ -79,13 +78,16 @@ app.use("*", async (c, next) => {
         [host]
       );
 
-      if (orgResult.length > 0) {
-        org_id = orgResult[0].id;
+      if (orgResult.length === 0) {
+        // Return error for all requests if domain does not exist
+        return c.text('Tenant not found for custom domain.', 404);
       }
+      org_id = orgResult[0].id;
     }
   } catch (err) {
     console.error('Error detecting tenant:', err);
-    // Continue with org_id = null (default tenant)
+    // Return error for all requests if tenant detection fails
+    return c.text('Tenant detection error.', 500);
   }
 
   c.set("org_id", org_id);

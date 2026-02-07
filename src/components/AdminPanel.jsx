@@ -137,9 +137,21 @@ export default function AdminPanel({ onDataChange, playerName }) {
   // Domain detection and initial tab setup
   useEffect(() => {
     const hostname = window.location.hostname;
-    const isSuper = hostname === 'grordle.com' || hostname === 'localhost';
+
+    // Check if this is super admin domain
+    // Super admin = exact match of 'grordle.com', 'localhost', or '127.0.0.1' (no subdomain)
+    // Tenant admin = any subdomain like 'friends.grordle.com' or 'friends.localhost'
+    const isSuper =
+      hostname === 'grordle.com' ||
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('localhost:') || // localhost with port
+      hostname.startsWith('127.0.0.1:');   // 127.0.0.1 with port
+
     setIsSuperAdmin(isSuper);
     setActiveTab(isSuper ? 'organizations' : 'users');
+
+    console.log('[AdminPanel] Domain detection:', { hostname, isSuper });
   }, []);
 
   // Load organizations (super admin only)
@@ -1435,7 +1447,17 @@ export default function AdminPanel({ onDataChange, playerName }) {
                   value={viewingAsOrgId || 'super'}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setViewingAsOrgId(val === 'super' ? null : parseInt(val));
+                    const newOrgId = val === 'super' ? null : parseInt(val);
+                    setViewingAsOrgId(newOrgId);
+
+                    // Auto-switch tab when changing modes
+                    if (newOrgId === null) {
+                      // Switched to super admin mode
+                      setActiveTab('organizations');
+                    } else {
+                      // Switched to tenant mode
+                      setActiveTab('users');
+                    }
                   }}
                   className="px-4 py-2 rounded-lg bg-white/20 text-white border-2 border-white/30 focus:border-white focus:outline-none"
                 >
@@ -1460,7 +1482,7 @@ export default function AdminPanel({ onDataChange, playerName }) {
 
           {/* Tab Navigation */}
           <div className="flex gap-2 mb-6 flex-wrap">
-            {isSuperAdmin && (
+            {isSuperAdmin && !viewingAsOrgId && (
               <>
                 <TabButton
                   isActive={activeTab === 'organizations'}
@@ -1497,8 +1519,8 @@ export default function AdminPanel({ onDataChange, playerName }) {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'organizations' && isSuperAdmin && renderOrganizationsTab()}
-          {activeTab === 'system' && isSuperAdmin && renderSystemTab()}
+          {activeTab === 'organizations' && isSuperAdmin && !viewingAsOrgId && renderOrganizationsTab()}
+          {activeTab === 'system' && isSuperAdmin && !viewingAsOrgId && renderSystemTab()}
           {activeTab === 'users' && renderUsersTab()}
           {activeTab === 'scores' && renderScoresTab()}
           {activeTab === 'settings' && renderSettingsTab()}

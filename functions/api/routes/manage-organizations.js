@@ -12,12 +12,16 @@ export async function manageOrganizationsHandler(c) {
           o.id,
           o.slug,
           o.name,
+          o.display_name,
           o.domain,
+          o.motd,
+          o.primary_color,
+          o.secondary_color,
           o.created_at,
           COUNT(DISTINCT p.id) as player_count
         FROM organizations o
         LEFT JOIN players p ON p.org_id = o.id
-        GROUP BY o.id, o.slug, o.name, o.domain, o.created_at
+        GROUP BY o.id, o.slug, o.name, o.display_name, o.domain, o.motd, o.primary_color, o.secondary_color, o.created_at
         ORDER BY o.created_at DESC
       `);
 
@@ -32,7 +36,7 @@ export async function manageOrganizationsHandler(c) {
     // Create new organization
     try {
       const body = await c.req.json();
-      const { slug, name, domain, adminPassword } = body;
+      const { slug, name, display_name, domain, motd, primary_color, secondary_color, adminPassword } = body;
 
       if (!slug || !name) {
         return c.json({ error: 'slug and name are required' }, 400);
@@ -55,10 +59,10 @@ export async function manageOrganizationsHandler(c) {
 
       // Create organization
       const result = await sql(
-        `INSERT INTO organizations (slug, name, domain, admin_password)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, slug, name, domain, created_at`,
-        [slug, name, domain || null, adminPassword || null]
+        `INSERT INTO organizations (slug, name, display_name, domain, motd, primary_color, secondary_color, admin_password)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING id, slug, name, display_name, domain, motd, primary_color, secondary_color, created_at`,
+        [slug, name, display_name || null, domain || null, motd || null, primary_color || '#8b5cf6', secondary_color || '#7c3aed', adminPassword || null]
       );
 
       return c.json({
@@ -76,7 +80,7 @@ export async function manageOrganizationsHandler(c) {
     // Update organization
     try {
       const body = await c.req.json();
-      const { id, slug, name, domain, adminPassword } = body;
+      const { id, slug, name, display_name, domain, motd, primary_color, secondary_color, adminPassword } = body;
 
       if (!id) {
         return c.json({ error: 'id is required' }, 400);
@@ -100,9 +104,29 @@ export async function manageOrganizationsHandler(c) {
         params.push(name);
       }
 
+      if (display_name !== undefined) {
+        updates.push(`display_name = $${paramIndex++}`);
+        params.push(display_name);
+      }
+
       if (domain !== undefined) {
         updates.push(`domain = $${paramIndex++}`);
         params.push(domain);
+      }
+
+      if (motd !== undefined) {
+        updates.push(`motd = $${paramIndex++}`);
+        params.push(motd);
+      }
+
+      if (primary_color !== undefined) {
+        updates.push(`primary_color = $${paramIndex++}`);
+        params.push(primary_color);
+      }
+
+      if (secondary_color !== undefined) {
+        updates.push(`secondary_color = $${paramIndex++}`);
+        params.push(secondary_color);
       }
 
       if (adminPassword !== undefined) {
@@ -118,7 +142,7 @@ export async function manageOrganizationsHandler(c) {
       const result = await sql(
         `UPDATE organizations SET ${updates.join(', ')}
          WHERE id = $${paramIndex}
-         RETURNING id, slug, name, domain, created_at`,
+         RETURNING id, slug, name, display_name, domain, motd, primary_color, secondary_color, created_at`,
         params
       );
 

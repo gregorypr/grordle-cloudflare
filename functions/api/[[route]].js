@@ -67,6 +67,9 @@ app.use("*", async (c, next) => {
 
       if (orgResult.length > 0) {
         org_id = orgResult[0].id;
+      } else {
+        // Return error if slug does not exist
+        return c.json({ error: 'Tenant not found for subdomain.' }, 404);
       }
     }
     // Could also check for custom domains here

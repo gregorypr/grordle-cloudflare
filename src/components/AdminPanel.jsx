@@ -46,22 +46,20 @@ export default function AdminPanel({ onDataChange, playerName }) {
           }
         }
       // ...existing code...
-    // Hardcoded admin password (should be changed in production)
-    const ADMIN_PASSWORD = "admin123";
-
-    // Handler for admin login
+// Handler for admin login
     async function checkAdminPassword() {
       setIsLoadingAdmin(true);
       try {
         // Fetch admin password for current tenant
         const result = await fetchJson(`${API_BASE}/tenant-settings`);
-        if (!('admin_password' in result)) {
-          setMessage("Admin password not found for this tenant.");
+        const dbAdminPassword = result.admin_password;
+
+        if (!dbAdminPassword) {
+          setMessage("No admin password configured for this tenant.");
           setIsLoadingAdmin(false);
           return;
         }
-        const dbAdminPassword = result.admin_password;
-        console.log('[AdminPanel] Checking admin password:', { entered: adminPassword, db: dbAdminPassword });
+
         if (adminPassword === dbAdminPassword) {
           setIsAdmin(true);
           setMessage("");
@@ -69,7 +67,8 @@ export default function AdminPanel({ onDataChange, playerName }) {
           setMessage("Incorrect password");
         }
       } catch (err) {
-        setMessage("Error checking admin password");
+        console.error('[AdminPanel] Error checking admin password:', err);
+        setMessage("Error checking admin password. Tenant may not exist.");
       } finally {
         setIsLoadingAdmin(false);
       }
@@ -77,13 +76,8 @@ export default function AdminPanel({ onDataChange, playerName }) {
   // State declarations
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState(false);
   
-  // Check if user is "greg" and bypass password
-  useEffect(() => {
-    if (playerName?.toLowerCase() === 'greg') {
-      setIsAdmin(true);
-    }
-  }, [playerName]);
   
   // ...existing code...
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -125,7 +119,8 @@ export default function AdminPanel({ onDataChange, playerName }) {
   const [editingOrgId, setEditingOrgId] = useState(null);
   const [orgFormData, setOrgFormData] = useState({
     slug: '', name: '', display_name: '', domain: '',
-    motd: '', primary_color: '#8b5cf6', secondary_color: '#7c3aed'
+    motd: '', primary_color: '#8b5cf6', secondary_color: '#7c3aed',
+    admin_password: ''
   });
   const [isCreatingOrg, setIsCreatingOrg] = useState(false);
 
@@ -1297,6 +1292,13 @@ export default function AdminPanel({ onDataChange, playerName }) {
                 onChange={(e) => setOrgFormData({ ...orgFormData, domain: e.target.value })}
                 className="w-full p-2 rounded bg-white/20 text-white placeholder-purple-200 border border-white/30 focus:border-white focus:outline-none text-sm"
               />
+              <input
+                type="text"
+                placeholder="Admin Password (required for tenant login)"
+                value={orgFormData.admin_password}
+                onChange={(e) => setOrgFormData({ ...orgFormData, admin_password: e.target.value })}
+                className="w-full p-2 rounded bg-white/20 text-white placeholder-purple-200 border border-white/30 focus:border-white focus:outline-none text-sm"
+              />
               <textarea
                 placeholder="Message of the Day (optional)"
                 value={orgFormData.motd}
@@ -1425,7 +1427,9 @@ export default function AdminPanel({ onDataChange, playerName }) {
             onChange={e => setAdminPassword(e.target.value)}
             placeholder="Enter admin password"
             className="w-full p-4 rounded-lg text-lg bg-white/20 text-white placeholder-purple-200 border-2 border-white/30 focus:border-white focus:outline-none"
-            onKeyDown={e => e.key === "Enter" && checkAdminPassword()}
+            onKeyDown={e => {
+              if (e.key === "Enter") checkAdminPassword();
+            }}
           />
           <button
             onClick={checkAdminPassword}
@@ -1433,6 +1437,11 @@ export default function AdminPanel({ onDataChange, playerName }) {
           >
             Login
           </button>
+          {/* Always show debug info for troubleshooting */}
+          <div style={{ color: 'yellow', fontSize: '12px', marginTop: '8px' }}>
+            <span>Entered: {adminPassword}</span><br />
+            <span>DB: {tenantSettings?.admin_password ?? 'N/A'}</span>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">

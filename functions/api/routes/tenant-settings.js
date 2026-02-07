@@ -15,7 +15,8 @@ export async function tenantSettingsHandler(c) {
           display_name: "Grordle",
           motd: null,
           primary_color: "#8b5cf6",
-          secondary_color: "#7c3aed"
+          secondary_color: "#7c3aed",
+          admin_password: "admin123"
         });
       }
 

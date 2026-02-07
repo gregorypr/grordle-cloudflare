@@ -36,7 +36,7 @@ export async function manageOrganizationsHandler(c) {
     // Create new organization
     try {
       const body = await c.req.json();
-      const { slug, name, display_name, domain, motd, primary_color, secondary_color, adminPassword } = body;
+      const { slug, name, display_name, domain, motd, primary_color, secondary_color, admin_password } = body;
 
       if (!slug || !name) {
         return c.json({ error: 'slug and name are required' }, 400);
@@ -62,7 +62,7 @@ export async function manageOrganizationsHandler(c) {
         `INSERT INTO organizations (slug, name, display_name, domain, motd, primary_color, secondary_color, admin_password)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, slug, name, display_name, domain, motd, primary_color, secondary_color, created_at`,
-        [slug, name, display_name || null, domain || null, motd || null, primary_color || '#8b5cf6', secondary_color || '#7c3aed', adminPassword || null]
+        [slug, name, display_name || null, domain || null, motd || null, primary_color || '#8b5cf6', secondary_color || '#7c3aed', admin_password || null]
       );
 
       return c.json({
@@ -80,7 +80,7 @@ export async function manageOrganizationsHandler(c) {
     // Update organization
     try {
       const body = await c.req.json();
-      const { id, slug, name, display_name, domain, motd, primary_color, secondary_color, adminPassword } = body;
+      const { id, slug, name, display_name, domain, motd, primary_color, secondary_color, admin_password } = body;
 
       if (!id) {
         return c.json({ error: 'id is required' }, 400);
@@ -129,9 +129,9 @@ export async function manageOrganizationsHandler(c) {
         params.push(secondary_color);
       }
 
-      if (adminPassword !== undefined) {
+      if (admin_password !== undefined) {
         updates.push(`admin_password = $${paramIndex++}`);
-        params.push(adminPassword);
+        params.push(admin_password);
       }
 
       if (updates.length === 0) {

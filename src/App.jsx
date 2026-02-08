@@ -188,31 +188,33 @@ export default function App() {
 
     fetchGameState();
 
-    // Check for day change every minute
-    const dayCheckInterval = setInterval(() => {
+    // Shared handler for day change detection
+    let lastCheckedDate = today;
+    const checkForDayChange = () => {
       const currentDate = getAustralianDate();
-      if (currentDate !== today) {
-        console.log("[App] Day changed! Refreshing...");
-        // Update todayDate state
-        setTodayDate(currentDate);
-        // Force refresh by updating the scores trigger
-        setScoresRefreshTrigger((prev) => prev + 1);
-        // Clear game state for new day
-        setIsPlaying(false);
-        setGameOver(false);
-        setGuesses([]);
-        setCurrentGuess("");
-        setMessage("");
-        setStartWord("");
-        setStartWordOwner("");
-        setKeyboardStatus({});
-        setHasAutoStarted(false);
-        // Update date and trigger word refresh
-        setTodayDate(currentDate);
+      if (currentDate !== lastCheckedDate) {
+        console.log("[App] Day changed!", lastCheckedDate, "->", currentDate, "Reloading...");
+        lastCheckedDate = currentDate;
+        // Reload the page to get fresh game state for the new day
+        window.location.reload();
       }
-    }, 60000); // Check every minute
+    };
 
-    return () => clearInterval(dayCheckInterval);
+    // Check for day change every minute
+    const dayCheckInterval = setInterval(checkForDayChange, 60000);
+
+    // Also check when user returns to the tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkForDayChange();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(dayCheckInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [wordListLoaded]);
 
   // Difficulty is now returned from get-target-word API

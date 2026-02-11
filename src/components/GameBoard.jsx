@@ -95,11 +95,11 @@ const Fireworks = () => {
 const VICTORY_TIERS = [
   null,  // 0 - unused
   null,  // 1 - start word can't win on its own
-  { message: "That's outstanding!", emoji: "🏆", color: "from-yellow-400 to-amber-500", textColor: "text-yellow-900" },
-  { message: "Very well done!",    emoji: "🌟", color: "from-green-400 to-emerald-500", textColor: "text-green-900" },
-  { message: "Good work",          emoji: "👏", color: "from-blue-400 to-cyan-500", textColor: "text-blue-900" },
-  { message: "Fair",               emoji: "👍", color: "from-purple-400 to-violet-500", textColor: "text-purple-900" },
-  { message: "Phew!!!",            emoji: "😅", color: "from-orange-400 to-red-500", textColor: "text-orange-900" },
+  { message: "That's outstanding!", subtitle: "You got it on your first go!",  emoji: "🏆", color: "from-yellow-400 to-amber-500", textColor: "text-yellow-900" },
+  { message: "Very well done!",    subtitle: "You got it on your second go!", emoji: "🌟", color: "from-green-400 to-emerald-500", textColor: "text-green-900" },
+  { message: "Good work",          subtitle: "You got it on your third go!",  emoji: "👏", color: "from-blue-400 to-cyan-500", textColor: "text-blue-900" },
+  { message: "Fair",               subtitle: "You got it on your fourth go!", emoji: "👍", color: "from-purple-400 to-violet-500", textColor: "text-purple-900" },
+  { message: "Phew!!!",            subtitle: "You got it on your last go!",   emoji: "😅", color: "from-orange-400 to-red-500", textColor: "text-orange-900" },
 ];
 
 export default function GameBoard({
@@ -324,7 +324,7 @@ export default function GameBoard({
               {victoryTier.message}
             </div>
             <div className="text-purple-200 text-lg mb-6">
-              You got it in <span className="font-bold text-white">{guesses.length - 1}</span> {guesses.length - 1 === 1 ? "guess" : "guesses"}
+              {victoryTier.subtitle}
             </div>
             <button
               className={`px-6 py-3 rounded-xl font-bold text-lg bg-gradient-to-r ${victoryTier.color} ${victoryTier.textColor} hover:scale-105 transition-transform`}

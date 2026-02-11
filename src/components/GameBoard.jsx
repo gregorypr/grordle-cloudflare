@@ -91,7 +91,18 @@ const Fireworks = () => {
   return <div id="fireworks-container" className="fireworks-container" />;
 };
 
-export default function GameBoard({ 
+// Victory tier messages (attempts includes the start word, so player's first guess = 2)
+const VICTORY_TIERS = [
+  null,  // 0 - unused
+  null,  // 1 - start word can't win on its own
+  { message: "That's outstanding!", emoji: "🏆", color: "from-yellow-400 to-amber-500", textColor: "text-yellow-900" },
+  { message: "Very well done!",    emoji: "🌟", color: "from-green-400 to-emerald-500", textColor: "text-green-900" },
+  { message: "Good work",          emoji: "👏", color: "from-blue-400 to-cyan-500", textColor: "text-blue-900" },
+  { message: "Fair",               emoji: "👍", color: "from-purple-400 to-violet-500", textColor: "text-purple-900" },
+  { message: "Phew!!!",            emoji: "😅", color: "from-orange-400 to-red-500", textColor: "text-orange-900" },
+];
+
+export default function GameBoard({
   playerName,
   isPlaying,
   gameOver,
@@ -117,6 +128,7 @@ export default function GameBoard({
   validationWords
 }) {
   const [showFireworks, setShowFireworks] = useState(false);
+  const [victoryTier, setVictoryTier] = useState(null);
 
     const updateKeyboardStatus = useCallback((guess, statuses) => {
       setKeyboardStatus(prevStatus => {
@@ -208,13 +220,15 @@ export default function GameBoard({
 
       if (guess === todayWord) {
         onGameOver(attemptsUsed, true);
-        setMessage(
-          `🎉 Correct! You got it in ${attemptsUsed} ${attemptsUsed === 1 ? "try" : "tries"}!`
-        );
+        setMessage("");
         // Trigger winning row bounce after reveal finishes
         setTimeout(() => {
           setWinningRowIndex(newRowIndex);
           setShowFireworks(true);
+          // Show victory overlay after a short delay
+          setTimeout(() => {
+            setVictoryTier(VICTORY_TIERS[attemptsUsed] || VICTORY_TIERS[6]);
+          }, 800);
           // Hide fireworks after animation
           setTimeout(() => setShowFireworks(false), 2500);
         }, totalRevealTime);
@@ -293,6 +307,34 @@ export default function GameBoard({
   return (
     <div className="pb-20">
       {showFireworks && <Fireworks />}
+
+      {/* Victory Overlay */}
+      {victoryTier && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
+          onClick={() => setVictoryTier(null)}
+        >
+          <div
+            className="mx-4 p-8 rounded-2xl shadow-2xl text-center transform animate-victory-pop max-w-sm w-full"
+            style={{ background: 'rgba(30, 20, 50, 0.95)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-6xl mb-4">{victoryTier.emoji}</div>
+            <div className={`text-3xl font-extrabold mb-3 bg-gradient-to-r ${victoryTier.color} bg-clip-text text-transparent`}>
+              {victoryTier.message}
+            </div>
+            <div className="text-purple-200 text-lg mb-6">
+              You got it in <span className="font-bold text-white">{guesses.length - 1}</span> {guesses.length - 1 === 1 ? "guess" : "guesses"}
+            </div>
+            <button
+              className={`px-6 py-3 rounded-xl font-bold text-lg bg-gradient-to-r ${victoryTier.color} ${victoryTier.textColor} hover:scale-105 transition-transform`}
+              onClick={() => setVictoryTier(null)}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between items-center mb-6 px-3">
         <h2 className="text-2xl font-bold text-white">

@@ -678,29 +678,19 @@ export default function App() {
 
           {/* Yesterday's Winners */}
           {yesterdayWinners && (
-            <div className="mb-4 p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-sm border border-purple-400/30">
-              <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
-                <span>🏆 Yesterday's winners:</span>
+            <div className="mb-4 p-1.5 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-xs border border-purple-400/30">
+              <div className="flex flex-wrap justify-center items-center gap-x-2">
+                <span>🏆 {(() => { const d = parseInt(yesterdayWinners.date.split('-')[2]); const s = ["th","st","nd","rd"]; return d + (s[(d%100-20)%10] || s[d%100] || s[0]); })()}</span>
                 {yesterdayWinners.dailyWinners && (
                   <span>
-                    Daily:{" "}
-                    <span className="font-bold">
-                      {yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}
-                    </span>
-                    {yesterdayWinners.dailyWinners.length <= 2 && (
-                      <span className="text-purple-200"> ({yesterdayWinners.dailyWinners[0].attempts} {yesterdayWinners.dailyWinners[0].attempts === 1 ? "guess" : "guesses"})</span>
-                    )}
+                    Daily: <span className="font-bold">{yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}</span>
+                    <span className="text-purple-200"> [{yesterdayWinners.dailyWinners[0].attempts}]</span>
                   </span>
                 )}
                 {yesterdayWinners.golfWinners && (
                   <span>
-                    Golf:{" "}
-                    <span className="font-bold">
-                      {yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}
-                    </span>
-                    {yesterdayWinners.golfWinners.length <= 2 && (
-                      <span className="text-purple-200"> ({yesterdayWinners.golfWinners[0].score >= 0 ? "+" : ""}{yesterdayWinners.golfWinners[0].score})</span>
-                    )}
+                    Golf: <span className="font-bold">{yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}</span>
+                    <span className="text-purple-200"> [{yesterdayWinners.golfWinners[0].score >= 0 ? "+" : ""}{yesterdayWinners.golfWinners[0].score}]</span>
                   </span>
                 )}
               </div>

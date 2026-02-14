@@ -680,7 +680,7 @@ export default function App() {
           {yesterdayWinners && (
             <div className="mb-4 p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-sm border border-purple-400/30">
               <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
-                <span>Yesterday's winners:</span>
+                <span>🏆 Yesterday's winners:</span>
                 {yesterdayWinners.dailyWinners && (
                   <span>
                     Daily:{" "}

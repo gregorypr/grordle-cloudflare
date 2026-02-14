@@ -679,10 +679,11 @@ export default function App() {
           {/* Yesterday's Winners */}
           {yesterdayWinners && (
             <div className="mb-4 p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-sm border border-purple-400/30">
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+              <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1">
+                <span>Yesterday's winners:</span>
                 {yesterdayWinners.dailyWinners && (
                   <span>
-                    Yesterday's Daily {yesterdayWinners.dailyWinners.length > 1 ? "Winners" : "Winner"}:{" "}
+                    Daily:{" "}
                     <span className="font-bold">
                       {yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}
                     </span>
@@ -690,7 +691,7 @@ export default function App() {
                 )}
                 {yesterdayWinners.golfWinners && (
                   <span>
-                    Yesterday's Golf {yesterdayWinners.golfWinners.length > 1 ? "Winners" : "Winner"}:{" "}
+                    Golf:{" "}
                     <span className="font-bold">
                       {yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}
                     </span>

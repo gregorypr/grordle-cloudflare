@@ -31,6 +31,11 @@ import {
 import "./styles/animations.css";
 import "./styles/scrollbar.css";
 
+function ordinal(n) {
+  const s = ["th","st","nd","rd"];
+  return n + (s[(n % 100 - 20) % 10] || s[n % 100] || s[0]);
+}
+
 export default function App() {
   const [view, setView] = useState("game");
   const [playerName, setPlayerName] = useState("");
@@ -680,7 +685,7 @@ export default function App() {
           {yesterdayWinners && (
             <div className="mb-4 p-1.5 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-xs border border-purple-400/30">
               <div className="flex flex-wrap justify-center items-center gap-x-2">
-                <span>🏆 {(() => { const d = parseInt(yesterdayWinners.date.split('-')[2]); const s = ["th","st","nd","rd"]; return d + (s[(d%100-20)%10] || s[d%100] || s[0]); })()}</span>
+                <span>🏆 {ordinal(parseInt(yesterdayWinners.date.split('-')[2]))}</span>
                 {yesterdayWinners.dailyWinners && (
                   <span>
                     Daily: <span className="font-bold">{yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}</span>
@@ -704,7 +709,7 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <span>Daily</span>
                     <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {new Date().getDate()}
+                      {ordinal(new Date().getDate())}
                     </span>
                   </div>
                   <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${

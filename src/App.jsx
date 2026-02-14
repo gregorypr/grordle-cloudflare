@@ -59,8 +59,9 @@ export default function App() {
   const [isGameLoading, setIsGameLoading] = useState(false);
   const [todayMessage, setTodayMessage] = useState("");
   const [tenantName, setTenantName] = useState("");
+  const [yesterdayWinners, setYesterdayWinners] = useState(null);
 
-  // Fetch today's message of the day and tenant name
+  // Fetch today's message of the day, tenant name, and yesterday's winners
   useEffect(() => {
     const fetchTodayMessage = async () => {
       try {
@@ -87,8 +88,22 @@ export default function App() {
         console.log("[App] Tenant settings not available");
       }
     };
+    const fetchYesterdayWinners = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/yesterday-winners`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.ok && (result.dailyWinner || result.golfWinner)) {
+            setYesterdayWinners(result);
+          }
+        }
+      } catch (err) {
+        console.log("[App] Yesterday winners not available");
+      }
+    };
     fetchTodayMessage();
     fetchTenantName();
+    fetchYesterdayWinners();
   }, []);
 
   // Check for saved authentication on mount
@@ -660,6 +675,24 @@ export default function App() {
               </>
             )}
           </div>
+
+          {/* Yesterday's Winners */}
+          {yesterdayWinners && (
+            <div className="mb-4 p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-sm border border-purple-400/30">
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                {yesterdayWinners.dailyWinner && (
+                  <span>
+                    Yesterday's Daily Winner: <span className="font-bold">{yesterdayWinners.dailyWinner.name}</span>
+                  </span>
+                )}
+                {yesterdayWinners.golfWinner && (
+                  <span>
+                    Yesterday's Golf Winner: <span className="font-bold">{yesterdayWinners.golfWinner.name}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 mb-6 justify-center flex-wrap">
             <TabButton

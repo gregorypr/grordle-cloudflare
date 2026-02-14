@@ -26,6 +26,7 @@ import { editGolfScoreHandler } from "./routes/edit-golf-score.js";
 import { wordVotesHandler } from "./routes/word-votes.js";
 import { manageOrganizationsHandler } from "./routes/manage-organizations.js";
 import { tenantSettingsHandler } from "./routes/tenant-settings.js";
+import { yesterdayWinnersHandler } from "./routes/yesterday-winners.js";
 
 // Golf routes
 import { golfStartHandler } from "./routes/golf-start.js";
@@ -132,6 +133,9 @@ app.delete("/manage-organizations", manageOrganizationsHandler);
 app.get("/tenant-settings", tenantSettingsHandler);
 app.put("/tenant-settings", tenantSettingsHandler);
 app.post("/tenant-settings", tenantSettingsHandler);
+
+// Yesterday's winners
+app.get("/yesterday-winners", yesterdayWinnersHandler);
 
 // Word routes
 app.post("/validate-word", validateWordHandler);

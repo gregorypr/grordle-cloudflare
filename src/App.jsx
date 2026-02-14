@@ -622,6 +622,13 @@ export default function App() {
             <div>
               <AnimatedLogo />
             </div>
+            <div className="text-purple-200 text-sm">
+              {(() => {
+                const d = new Date(new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).split('/').reverse().join('-') + 'T00:00:00');
+                const month = d.toLocaleString('en-US', { month: 'long' });
+                return `${month} ${ordinal(d.getDate())}, ${d.getFullYear()}`;
+              })()}
+            </div>
           </div>
           <div className="mt-3">
             <p className="text-purple-200 text-sm">
@@ -708,9 +715,6 @@ export default function App() {
                 <div className="flex flex-col items-center gap-0.5">
                   <div className="flex items-center gap-2">
                     <span>Daily</span>
-                    <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {ordinal(new Date().getDate())}
-                    </span>
                   </div>
                   <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                     todayDifficulty === "Easy" ? "bg-green-600 text-white" :

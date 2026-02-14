@@ -93,7 +93,7 @@ export default function App() {
         const response = await fetch(`${API_BASE}/yesterday-winners`);
         if (response.ok) {
           const result = await response.json();
-          if (result.ok && (result.dailyWinner || result.golfWinner)) {
+          if (result.ok && (result.dailyWinners || result.golfWinners)) {
             setYesterdayWinners(result);
           }
         }
@@ -680,14 +680,20 @@ export default function App() {
           {yesterdayWinners && (
             <div className="mb-4 p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg text-white text-center text-sm border border-purple-400/30">
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-                {yesterdayWinners.dailyWinner && (
+                {yesterdayWinners.dailyWinners && (
                   <span>
-                    Yesterday's Daily Winner: <span className="font-bold">{yesterdayWinners.dailyWinner.name}</span>
+                    Yesterday's Daily {yesterdayWinners.dailyWinners.length > 1 ? "Winners" : "Winner"}:{" "}
+                    <span className="font-bold">
+                      {yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}
+                    </span>
                   </span>
                 )}
-                {yesterdayWinners.golfWinner && (
+                {yesterdayWinners.golfWinners && (
                   <span>
-                    Yesterday's Golf Winner: <span className="font-bold">{yesterdayWinners.golfWinner.name}</span>
+                    Yesterday's Golf {yesterdayWinners.golfWinners.length > 1 ? "Winners" : "Winner"}:{" "}
+                    <span className="font-bold">
+                      {yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}
+                    </span>
                   </span>
                 )}
               </div>

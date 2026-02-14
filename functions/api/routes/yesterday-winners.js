@@ -30,7 +30,7 @@ export async function yesterdayWinnersHandler(c) {
   try {
     const yesterday = getYesterdayDate();
 
-    // Get yesterday's daily winner (lowest attempts, success = true)
+    // Get yesterday's daily winners (all players tied for lowest attempts)
     const dailyResult = await sql(
       `SELECT p.player_name, s.attempts
        FROM scores s
@@ -40,12 +40,19 @@ export async function yesterdayWinnersHandler(c) {
          AND s.success = true
          AND COALESCE(p.org_id, 0) = COALESCE($2, 0)
          AND COALESCE(g.org_id, 0) = COALESCE($2, 0)
-       ORDER BY s.attempts ASC
-       LIMIT 1`,
+         AND s.attempts = (
+           SELECT MIN(s2.attempts)
+           FROM scores s2
+           JOIN games g2 ON s2.game_id = g2.id
+           WHERE g2.play_date = $1
+             AND s2.success = true
+             AND COALESCE(g2.org_id, 0) = COALESCE($2, 0)
+         )
+       ORDER BY p.player_name ASC`,
       [yesterday, org_id]
     );
 
-    // Get yesterday's golf winner (lowest total_score, completed rounds)
+    // Get yesterday's golf winners (all players tied for lowest total_score)
     const golfResult = await sql(
       `SELECT p.player_name, gr.total_score
        FROM golf_rounds gr
@@ -54,19 +61,27 @@ export async function yesterdayWinnersHandler(c) {
          AND gr.completed_at::date = $1
          AND COALESCE(p.org_id, 0) = COALESCE($2, 0)
          AND COALESCE(gr.org_id, 0) = COALESCE($2, 0)
-       ORDER BY gr.total_score ASC
-       LIMIT 1`,
+         AND gr.total_score = (
+           SELECT MIN(gr2.total_score)
+           FROM golf_rounds gr2
+           JOIN players p2 ON gr2.player_id = p2.id
+           WHERE gr2.is_completed = true
+             AND gr2.completed_at::date = $1
+             AND COALESCE(p2.org_id, 0) = COALESCE($2, 0)
+             AND COALESCE(gr2.org_id, 0) = COALESCE($2, 0)
+         )
+       ORDER BY p.player_name ASC`,
       [yesterday, org_id]
     );
 
     return c.json({
       ok: true,
       date: yesterday,
-      dailyWinner: dailyResult.length > 0
-        ? { name: dailyResult[0].player_name, attempts: dailyResult[0].attempts }
+      dailyWinners: dailyResult.length > 0
+        ? dailyResult.map(r => ({ name: r.player_name, attempts: r.attempts }))
         : null,
-      golfWinner: golfResult.length > 0
-        ? { name: golfResult[0].player_name, score: golfResult[0].total_score }
+      golfWinners: golfResult.length > 0
+        ? golfResult.map(r => ({ name: r.player_name, score: r.total_score }))
         : null,
     });
   } catch (err) {

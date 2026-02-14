@@ -687,6 +687,9 @@ export default function App() {
                     <span className="font-bold">
                       {yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}
                     </span>
+                    {yesterdayWinners.dailyWinners.length <= 2 && (
+                      <span className="text-purple-200"> ({yesterdayWinners.dailyWinners[0].attempts} {yesterdayWinners.dailyWinners[0].attempts === 1 ? "guess" : "guesses"})</span>
+                    )}
                   </span>
                 )}
                 {yesterdayWinners.golfWinners && (
@@ -695,6 +698,9 @@ export default function App() {
                     <span className="font-bold">
                       {yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}
                     </span>
+                    {yesterdayWinners.golfWinners.length <= 2 && (
+                      <span className="text-purple-200"> ({yesterdayWinners.golfWinners[0].score >= 0 ? "+" : ""}{yesterdayWinners.golfWinners[0].score})</span>
+                    )}
                   </span>
                 )}
               </div>

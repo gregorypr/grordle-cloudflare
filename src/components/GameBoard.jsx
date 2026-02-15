@@ -364,10 +364,6 @@ export default function GameBoard({
         })}
       </div>
 
-      <p className="text-center text-xs text-purple-200 mb-4">
-        Type letters on your keyboard to fill the current row. Press Enter to submit, or use the on-screen keys.
-      </p>
-
       {showShareButton && gameOver && guesses.length > 0 && (
         <div className="flex justify-center mb-4">
           <button

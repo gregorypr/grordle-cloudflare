@@ -500,20 +500,6 @@ export default function App() {
     recordScore(playerName.trim().toLowerCase(), todayDate, attempts, success);
   };
 
-  const resetGame = () => {
-    setIsPlaying(false);
-    setGameOver(false);
-    setGuesses([]);
-    setCurrentGuess("");
-    setMessage("");
-    setStartWord("");
-    setStartWordOwner("");
-    setKeyboardStatus({});
-    setView("game");
-    setIsGameLoading(false);
-    // Refresh scores to show the just-completed game
-    setScoresRefreshTrigger((prev) => prev + 1);
-  };
 
   if (loadingError) {
     return (
@@ -780,14 +766,6 @@ export default function App() {
                     validationWords={validationWords}
                   />
 
-                  {gameOver && (
-                    <button
-                      onClick={resetGame}
-                      className="w-full mt-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg font-bold text-lg hover:from-blue-600 hover:to-indigo-600 transition"
-                    >
-                      Return to Main Menu
-                    </button>
-                  )}
                 </>
               )}
             </>

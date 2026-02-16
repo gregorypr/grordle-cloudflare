@@ -36,6 +36,11 @@ function ordinal(n) {
   return n + (s[(n % 100 - 20) % 10] || s[n % 100] || s[0]);
 }
 
+function joinNames(names) {
+  if (names.length <= 2) return names.join(" & ");
+  return names.slice(0, -1).join(", ") + " & " + names[names.length - 1];
+}
+
 export default function App() {
   const [view, setView] = useState("game");
   const [playerName, setPlayerName] = useState("");
@@ -681,13 +686,13 @@ export default function App() {
                 <span>🏆 {ordinal(parseInt(yesterdayWinners.date.split('-')[2]))}</span>
                 {yesterdayWinners.dailyWinners && (
                   <span>
-                    Daily: <span className="font-bold">{yesterdayWinners.dailyWinners.map(w => w.name).join(" & ")}</span>
+                    Daily: <span className="font-bold">{joinNames(yesterdayWinners.dailyWinners.map(w => w.name))}</span>
                     <span className="text-purple-200"> [{yesterdayWinners.dailyWinners[0].attempts}]</span>
                   </span>
                 )}
                 {yesterdayWinners.golfWinners && (
                   <span>
-                    Golf: <span className="font-bold">{yesterdayWinners.golfWinners.map(w => w.name).join(" & ")}</span>
+                    Golf: <span className="font-bold">{joinNames(yesterdayWinners.golfWinners.map(w => w.name))}</span>
                     <span className="text-purple-200"> [{yesterdayWinners.golfWinners[0].score >= 0 ? "+" : ""}{yesterdayWinners.golfWinners[0].score}]</span>
                   </span>
                 )}

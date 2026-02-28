@@ -27,6 +27,7 @@ import { wordVotesHandler } from "./routes/word-votes.js";
 import { manageOrganizationsHandler } from "./routes/manage-organizations.js";
 import { tenantSettingsHandler } from "./routes/tenant-settings.js";
 import { yesterdayWinnersHandler } from "./routes/yesterday-winners.js";
+import { completedGolfRoundsHandler } from "./routes/completed-golf-rounds.js";
 
 // Golf routes
 import { golfStartHandler } from "./routes/golf-start.js";
@@ -73,7 +74,7 @@ app.use("*", async (c, next) => {
       org_id = orgResult[0].id;
     }
     // Could also check for custom domains here
-    else if (host && host !== 'grordle.com' && host !== 'localhost:3000' && !host.includes('.pages.dev')) {
+    else if (host && host !== 'grordle.com' && !host.startsWith('localhost:') && !host.includes('.pages.dev')) {
       const orgResult = await sql(
         'SELECT id FROM organizations WHERE domain = $1',
         [host]
@@ -137,6 +138,9 @@ app.post("/tenant-settings", tenantSettingsHandler);
 // Yesterday's winners
 app.get("/yesterday-winners", yesterdayWinnersHandler);
 
+// Completed golf rounds
+app.get("/completed-golf-rounds", completedGolfRoundsHandler);
+
 // Word routes
 app.post("/validate-word", validateWordHandler);
 app.get("/wordlist", wordlistHandler);
@@ -153,7 +157,8 @@ app.post("/golf-game-state", golfGameStateHandler);
 
 // 404 handler
 app.all("*", (c) => {
-  return c.json({ error: "Not Found" }, 404);
+  console.log('[404] Unmatched path:', c.req.path, 'method:', c.req.method);
+  return c.json({ error: "Not Found", path: c.req.path }, 404);
 });
 
 // Export for Cloudflare Pages Functions

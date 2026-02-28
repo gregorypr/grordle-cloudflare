@@ -4,6 +4,7 @@ import GameBoard from "./components/GameBoard";
 import Leaderboard from "./components/Leaderboard";
 import AdminPanel from "./components/AdminPanel";
 import CompletedGames from "./components/CompletedGames";
+import CompletedGolfRounds from "./components/CompletedGolfRounds";
 import Login from "./components/Login";
 import AnimatedLogo from "./components/AnimatedLogo";
 import LoadingScreen from "./components/LoadingScreen";
@@ -808,13 +809,28 @@ export default function App() {
           )}
 
           {view === "completed" && (
-            <CompletedGames
-              todayDate={todayDate}
-              gameOver={gameOver}
-              currentPlayerName={playerName}
-              refreshTrigger={scoresRefreshTrigger}
-              allPlayers={allPlayers}
-            />
+            <div className="space-y-6">
+              <div className="text-center">
+                <a
+                  href="#golf-results"
+                  className="inline-block px-4 py-2 bg-green-600/60 hover:bg-green-600/80 text-white text-sm font-semibold rounded-full transition"
+                >
+                  ⛳ Jump to Golf Results ↓
+                </a>
+              </div>
+              <CompletedGames
+                todayDate={todayDate}
+                gameOver={gameOver}
+                currentPlayerName={playerName}
+                refreshTrigger={scoresRefreshTrigger}
+                allPlayers={allPlayers}
+              />
+              <CompletedGolfRounds
+                todayDate={todayDate}
+                currentPlayerName={playerName}
+                refreshTrigger={scoresRefreshTrigger}
+              />
+            </div>
           )}
 
           {view === "leaderboard" && (
